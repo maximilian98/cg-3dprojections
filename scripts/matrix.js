@@ -239,31 +239,60 @@ function mat4x4identity() {
 
 function mat4x4translate(tx, ty, tz) {
     var result = new Matrix(4, 4);
-    
+    result[0][0] = 1;
+    result[0][3] = tx;
+    result[1][1] = 1;
+    result[1][3] = ty;
+    result[2][2] = 1;
+    result[2][3] = tz;
+    result[3][3] = 1;
+    result = this.mult(result);
     return result;
 }
 
 function mat4x4scale(sx, sy, sz) {
     var result = new Matrix(4, 4);
-    
+    result[0][0] = sx;
+    result[1][1] = sy;
+    result[2][2] = sz;
+    result[3][3] = 1;
+    result = this.mult(result);    
     return result;
 }
 
 function mat4x4rotatex(theta) {
     var result = new Matrix(4, 4);
-    
+    result[0][0] = 1;
+    result[1][1] = Math.cos(theta);
+    result[1][2] = (-1)*(Math.sin(theta));
+    result[2][1] = Math.sin(theta);
+    result[2][2] = Math.cos(theta);
+    result[3][3] = 1;
+    result = this.mult(result);    
     return result;
 }
 
 function mat4x4rotatey(theta) {
     var result = new Matrix(4, 4);
-    
+    result[0][0] = Math.cos(theta);
+    result[0][2] = Math.sin(theta);
+    result[1][1] = 1;
+    result[2][0] = (-1) * (Math.sin(theta));
+    result[2][2] = Math.cos(theta);
+    result[3][3] = 1;
+    result = this.mult(result);    
     return result;
 }
 
 function mat4x4rotatez(theta) {
     var result = new Matrix(4, 4);
-    
+    result[0][0] = Math.cos(theta);
+    result[0][1] = (-1) * (Math.sin(theta));
+    result[1][0] = Math.sin(theta);
+    result[1][1] = Math.cos(theta);
+    result[2][2] = 1;
+    result[3][3] = 1;
+    result = this.mult(result);   
     return result;
 }
 
@@ -280,6 +309,7 @@ function mat4x4parallel(vrp, vpn, vup, prp, clip) {
     // 3. shear such that the DOP becomes parallel to the z-axis
     // 4. translate and scale into canonical view volume
     //    (x = [-1,1], y = [-1,1], z = [0,-1])
+
     
 }
 
