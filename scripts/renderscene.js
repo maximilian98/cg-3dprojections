@@ -22,8 +22,8 @@ function Init() {
         y = center.y - height/z
         z = center.z + radius*sin(theta)
         */
-        
-        
+
+
         view: {
             type: 'perspective',
             vrp: Vector3(20, 0, -30),
@@ -36,16 +36,16 @@ function Init() {
             {
                 type: 'generic',
                 vertices: [
-                    Vector4( 0,  0, -30, 1),
-                    Vector4(20,  0, -30, 1),
+                    Vector4(0, 0, -30, 1),
+                    Vector4(20, 0, -30, 1),
                     Vector4(20, 12, -30, 1),
                     Vector4(10, 20, -30, 1),
-                    Vector4( 0, 12, -30, 1),
-                    Vector4( 0,  0, -60, 1),
-                    Vector4(20,  0, -60, 1),
+                    Vector4(0, 12, -30, 1),
+                    Vector4(0, 0, -60, 1),
+                    Vector4(20, 0, -60, 1),
                     Vector4(20, 12, -60, 1),
                     Vector4(10, 20, -60, 1),
-                    Vector4( 0, 12, -60, 1)
+                    Vector4(0, 12, -60, 1)
                 ],
                 edges: [
                     [0, 1, 2, 3, 4, 0],
@@ -61,17 +61,53 @@ function Init() {
     };
     // event handler for pressing arrow keys
     document.addEventListener('keydown', OnKeyDown, false);
-    
+
     DrawScene();
 }
 
 // Main drawing code here! Use information contained in variable `scene`
 function DrawScene() {
-    
+    /*
+    //CLEAR OLD 
+    view = document.getElementById('view');
+    ctx.clearRect(0, 0, view.width, view.height);
+
+    //ANIMATION
+    var start_time;
+    var prev_time;
+
+    function Animate(timestamp) {
+        // step 1: calculate time (time since start) 
+                and/or delta time (time between successive frames)
+        // step 2: transform models based on time or delta time
+        // step 3: draw scene
+        // step 4: request next animation frame (recursively calling same function)
+
+
+        var time = time_stamp - start_time;
+        var dt = timestamp - prev_time;
+        prev_time = time_stamp;
+
+        // ... step 2
+
+        DrawScene();
+
+        window.requestAnimationFrame(Animate);
+    }
+
+    start_time = performance.now(); // current timestamp in milliseconds
+    prev_time = start_time;
+    window.requestAnimationFrame(Animate);
+    */
+
+
+
+
+
     //will need to get the tranformation matrix, which should be return by the parallel and perpective calculations
     //take this matrix and multiply it by the verticies
     //then the veritices will be scaled to the window size and we will need to clip them to fit within
-    
+
     console.log(scene);
 }
 
@@ -93,16 +129,16 @@ function LoadNewScene() {
             if (scene.models[i].type === 'generic') {
                 for (let j = 0; j < scene.models[i].vertices.length; j++) {
                     scene.models[i].vertices[j] = Vector4(scene.models[i].vertices[j][0],
-                                                          scene.models[i].vertices[j][1],
-                                                          scene.models[i].vertices[j][2],
-                                                          1);
+                        scene.models[i].vertices[j][1],
+                        scene.models[i].vertices[j][2],
+                        1);
                 }
             }
             else {
                 scene.models[i].center = Vector4(scene.models[i].center[0],
-                                                 scene.models[i].center[1],
-                                                 scene.models[i].center[2],
-                                                 1);
+                    scene.models[i].center[1],
+                    scene.models[i].center[2],
+                    1);
             }
         }
 

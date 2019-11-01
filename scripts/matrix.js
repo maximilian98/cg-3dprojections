@@ -230,10 +230,13 @@ class Vector extends Matrix {
 }
 
 
-
+//will use this for animation in place of rotating if there's no rotation to do...basically a the else to an if
 function mat4x4identity() {
     var result = new Matrix(4, 4);
-    
+    result[0][0] = 1;
+    result[1][1] = 1;
+    result[2][2] = 1;
+    result[3][3] = 1;
     return result;
 }
 
@@ -309,15 +312,18 @@ function mat4x4shearxy(shx, shy) {
     return result;
 }
 
-function mat4x4parallel(vrp, vpn, vup, prp, clip) {
+function mat4x4parallel(vrp, vpn, vup, prp, clip) {    
     // 1. translate VRP to the origin
+    var result = new Matrix(4, 4);
+    var step1result = mat4x4translate(vrp.x(), vrp.y(), vrp.z());
+
     // 2. rotate VRC such that n-axis (VPN) becomes the z-axis, 
     //    u-axis becomes the x-axis, and v-axis becomes the y-axis
     // 3. shear such that the DOP becomes parallel to the z-axis
     // 4. translate and scale into canonical view volume
     //    (x = [-1,1], y = [-1,1], z = [0,-1])
 
-    
+    return result;
 }
 
 function mat4x4perspective(vrp, vpn, vup, prp, clip) {
