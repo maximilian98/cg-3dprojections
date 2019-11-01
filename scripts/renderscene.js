@@ -14,6 +14,16 @@ function Init() {
 
     // initial scene... feel free to change this
     scene = {
+        /*
+        sphere stuff he wrote on the board
+        
+        increment = 2pi/sides
+        x = center.x + radius*cos(theta)
+        y = center.y - height/z
+        z = center.z + radius*sin(theta)
+        */
+        
+        
         view: {
             type: 'perspective',
             vrp: Vector3(20, 0, -30),
@@ -57,6 +67,9 @@ function Init() {
 
 // Main drawing code here! Use information contained in variable `scene`
 function DrawScene() {
+    
+    //will need to get the tranformation matrix, which should be return by the parallel and perpective calculations
+    //take this matrix and multiply it by the verticies
     console.log(scene);
 }
 
