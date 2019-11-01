@@ -296,9 +296,16 @@ function mat4x4rotatez(theta) {
     return result;
 }
 
+//this is only used for the parallel projection case
 function mat4x4shearxy(shx, shy) {
     var result = new Matrix(4, 4);
-    
+    result[0][0] = 1;
+    result[0][2] = shx;
+    result[1][1] = 1;
+    result[1][2] = shy;
+    result[2][2] = 1;
+    result[3][3] = 1;
+    result = this.mult(result); 
     return result;
 }
 
