@@ -316,6 +316,46 @@ function mat4x4parallel(vrp, vpn, vup, prp, clip) {
     // 1. translate VRP to the origin
     var result = new Matrix(4, 4);
     var step1result = mat4x4translate(vrp.x(), vrp.y(), vrp.z());
+	
+	var n = vpn.normalize();
+	var u = vup.cross(n);
+	var v = n.cross(u);
+	var step2result = new Matrix(4, 4);
+	step2result[0][0] = u.x();
+    step2result[0][1] = u.y();
+	step2result[0][2] = u.z();
+	step2result[1][0] = v.x();
+    step2result[1][1] = v.y();
+    step2result[1][2] = v.z();
+    step2result[2][0] = n.x();
+    step2result[2][1] = n.y();
+	step2result[2][2] = n.z();
+	step2result[3][3] = 1;
+	
+	var CW= new Vector3((clip[0]+ clip[1])/2, (clip[2]+ clip[3])/2, (clip[4]+ clip[5])/2 );
+	var newPRP = VRP.add(u.scale(prp.x));
+	newPRP.add(v.scale(prp.y()));
+	newPRP.add(n.scale(prp.z()));
+	
+	var DOP = CW.subtract(newPRP);
+	var shx = ((-1)*DOP.x())/DOP.z();
+	var shy = ((-1)*DOP.y())/DOP.z();
+	var step3result= mat4x4shearxy(shx, shy);
+	
+	var F = clip[4];
+	var step4result = mat4x4translate((-1)*CW.x(),(-1)*CW.y(), (-1)*F);
+
+	var Sparx = 2/(clip[1]-clip[0]);
+	var Spary = 2/(clip[3]-clip[2]);
+	var Sparz = 1/(clip[4]-clip[5]);
+	var step5result = mat4x4scale(Sparx, Spary, Sparz);
+	
+	result = step5result.mult(step4result);
+	result = result.mult(step3result);
+	result = result.mult(step2result);
+	result = result.mult(step1result);
+	
+	
 
     // 2. rotate VRC such that n-axis (VPN) becomes the z-axis, 
     //    u-axis becomes the x-axis, and v-axis becomes the y-axis
