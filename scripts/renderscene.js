@@ -79,19 +79,6 @@ function DrawScene() {
         //!!!!!!!!!!!!!!
         //!!!!!!!!!!!!!
     }
-    var transTo02 = new Matrix(4,4);
-    transTo02.values[0][0] = 1;
-    transTo02.values[0][3] = 1;
-    transTo02.values[1][1] = 1;
-    transTo02.values[1][3] = 1;
-    transTo02.values[2][2] = 1;
-    transTo02.values[3][3] = 1;
-    for(var i = 0; i<scene.models[0].vertices.length; i++){
-        //will give in terms of tiny window 
-        scene.models[0].vertices[i] = transTo02.mult(scene.models[0].vertices[i])
-
-    }
-
 
 
     //I think there is something wrong with this matrix
