@@ -328,13 +328,9 @@ function mat4x4parallel(vrp, vpn, vup, prp, clip) {
 	step2result.values[2][2] = n.z;
 	step2result.values[3][3] = 1;
 	
-	var CW= new Vector3((clip[0]+ clip[1])/2, (clip[2]+ clip[3])/2, (clip[4]+ clip[5])/2 );
-    var newPRP = vrp;
-    newPRP.add(u.scale(prp.x));
-	newPRP.add(v.scale(prp.y));
-	newPRP.add(n.scale(prp.z));
+	var CW= new Vector3((clip[0]+ clip[1])/2, (clip[2]+ clip[3])/2, 0 );
 	
-	var DOP = CW.subtract(newPRP);
+	var DOP = CW.subtract(prp);
 	var shx = ((-1)*DOP.x)/DOP.z;
 	var shy = ((-1)*DOP.y)/DOP.z;
 	var step3result= mat4x4shearxy(shx, shy);
