@@ -105,6 +105,7 @@ function DrawScene() {
     //take this matrix and multiply it by the verticies
     //then the veritices will be scaled to the window size and we will need to clip them to fit within
 
+	
     console.log(scene);
 }
 
