@@ -309,7 +309,7 @@ function mat4x4shearxy(shx, shy) {
 function mat4x4parallel(vrp, vpn, vup, prp, clip) {    
     // 1. translate VRP to the origin
     var result = new Matrix(4, 4);
-    var step1result = mat4x4translate(vrp.x, vrp.y, vrp.z);
+    var step1result = mat4x4translate((-1)*vrp.x, (-1)*vrp.y, (-1)*vrp.z);
     
 
     var n = vpn;
@@ -360,6 +360,49 @@ function mat4x4parallel(vrp, vpn, vup, prp, clip) {
 }
 
 function mat4x4perspective(vrp, vpn, vup, prp, clip) {
+	
+	var result = new Matrix(4, 4);
+    var step1result = mat4x4translate((-1)*vrp.x, (-1)*vrp.y, (-1)*vrp.z);
+    
+
+    var n = vpn;
+    n.normalize();
+    var u = vup.cross(n);
+    var v = n.cross(u);
+	var step2result = new Matrix(4, 4);
+	step2result.values[0][0] = u.x;
+    step2result.values[0][1] = u.y;
+	step2result.values[0][2] = u.z;
+	step2result.values[1][0] = v.x;
+    step2result.values[1][1] = v.y;
+    step2result.values[1][2] = v.z;
+    step2result.values[2][0] = n.x;
+    step2result.values[2][1] = n.y;
+	step2result.values[2][2] = n.z;
+	step2result.values[3][3] = 1;
+	
+	var step3result = mat4x4translate((-1)*prp.x, (-1)*prp.y, (-1)*prp.z);
+	
+	/*var shx = ((-1)*prp.x)/prp.z;
+	var shy = ((-1)*prp.y)/prp.z;
+	var step4result= mat4x4shearxy(shx, shy);*/
+	var CW= new Vector3((clip[0]+ clip[1])/2, (clip[2]+ clip[3])/2, 0 );
+	
+	var DOP = CW.subtract(prp);
+	var shx = ((-1)*DOP.x)/DOP.z;
+	var shy = ((-1)*DOP.y)/DOP.z;
+	var step4result= mat4x4shearxy(shx, shy);
+	
+	var Sparx = (2* (-1)*prp.z)/((clip[1]-clip[0])*((-1)*prp.z + clip[5]));
+	var Spary = (2* (-1)*prp.z)/((clip[3]-clip[2])*((-1)*prp.z + clip[5]));
+	var Sparz = -1/((-1)*prp.z + clip[5]);
+	var step5result = mat4x4scale(Sparx, Spary, Sparz);
+	
+	result = step5result.mult(step4result);
+	result = result.mult(step3result);
+	result = result.mult(step2result);
+	result = result.mult(step1result);
+	
     // 1. translate VRP to the origin
     // 2. rotate VRC such that n-axis (VPN) becomes the z-axis, 
     //    u-axis becomes the x-axis, and v-axis becomes the y-axis
@@ -367,7 +410,7 @@ function mat4x4perspective(vrp, vpn, vup, prp, clip) {
     // 4. shear such that the center line of the view volume becomes the z-axis
     // 5. scale into canonical view volume (truncated pyramid)
     //    (x = [z,-z], y = [z,-z], z = [-z_min,-1])
-    
+    return result;
 }
 
 function mat4x4mper(near) {

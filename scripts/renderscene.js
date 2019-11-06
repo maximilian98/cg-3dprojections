@@ -25,12 +25,20 @@ function Init() {
 
 
         view: {
+			
             type: 'perspective',
             vrp: Vector3(20, 0, -30),
             vpn: Vector3(1, 0, 1),
             vup: Vector3(0, 1, 0),
             prp: Vector3(14, 20, 26),
             clip: [-20, 20, -4, 36, 1, -50]
+			/*
+			vrp: Vector3(0, 0, 54),
+            vpn: Vector3(0, 0, 1),
+            vup: Vector3(0, 1, 0),
+            prp: Vector3(8, 8, 30),
+            clip: [-1, 17, -1, 17, 2, -23]*/
+			
         },
         models: [
             {
@@ -68,18 +76,25 @@ function Init() {
 function DrawScene() {
 
     //all for parallel ones
-    var transMatrix = mat4x4parallel(scene.view.vrp, scene.view.vpn, scene.view.vup, scene.view.prp, scene.view.clip)
+    var transMatrix = mat4x4perspective(scene.view.vrp, scene.view.vpn, scene.view.vup, scene.view.prp, scene.view.clip);
+	console.log("This is NPer" + transMatrix.values);
     var ogData = scene.models[0].vertices;
     //will need to loop though all models later on.
     for(var i = 0; i<scene.models[0].vertices.length; i++){
         //will give in terms of tiny window 
         scene.models[0].vertices[i] = transMatrix.mult(scene.models[0].vertices[i])
         console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
-        //!!!!!There is something wrong with our transformations because this gives us vaules from -1 to 1
-        //!!!!!!!!!!!!!!
-        //!!!!!!!!!!!!!
     }
-
+	/*mperMatrix = new Matrix(4,4);
+    mperMatrix.values[0][0] = 1;
+    mperMatrix.values[1][1] = 1;
+    mperMatrix.values[2][2] = 1;
+    mperMatrix.values[3][2] = -1;
+	
+	for(var i = 0; i<scene.models[0].vertices.length; i++){
+        //put into framebuffer coordinates
+        scene.models[0].vertices[i] = mperMatrix.mult(scene.models[0].vertices[i]);
+    }*/
 
     //I think there is something wrong with this matrix
     fbMatrix = new Matrix(4,4);
@@ -93,8 +108,9 @@ function DrawScene() {
     for(var i = 0; i<scene.models[0].vertices.length; i++){
         //put into framebuffer coordinates
         scene.models[0].vertices[i] = fbMatrix.mult(scene.models[0].vertices[i])
-        console.log("framebuffer coords: "+scene.models[0].vertices[i].data)
     }
+
+	
     
     for(var i = 0; i<scene.models[0].edges.length; i++){
         //loop through each set of edges
