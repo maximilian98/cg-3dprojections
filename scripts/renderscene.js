@@ -61,12 +61,60 @@ function Init() {
     };
     // event handler for pressing arrow keys
     document.addEventListener('keydown', OnKeyDown, false);
-
     DrawScene();
 }
 
 // Main drawing code here! Use information contained in variable `scene`
 function DrawScene() {
+
+    //all for parallel ones
+    var transMatrix = mat4x4parallel(scene.view.vrp, scene.view.vpn, scene.view.vup, scene.view.prp, scene.view.clip)
+    var ogData = scene.models[0].vertices;
+    //will need to loop though all models later on.
+    for(var i = 0; i<scene.models[0].vertices.length; i++){
+        //will give in terms of tiny window 
+        scene.models[0].vertices[i] = transMatrix.mult(scene.models[0].vertices[i])
+        console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
+        //!!!!!There is something wrong with our transformations because this gives us vaules from -1 to 1
+        //!!!!!!!!!!!!!!
+        //!!!!!!!!!!!!!
+    }
+
+
+    //I think there is something wrong with this matrix
+    fbMatrix = new Matrix(4,4);
+    fbMatrix.values[0][0] = (view.width/2);
+    fbMatrix.values[0][3] = (view.width/2);
+    fbMatrix.values[1][1] = (view.height/2);
+    fbMatrix.values[1][3] = (view.height/2);
+    fbMatrix.values[2][2] = 1;
+    fbMatrix.values[3][3] = 1;
+
+    for(var i = 0; i<scene.models[0].vertices.length; i++){
+        //put into framebuffer coordinates
+        scene.models[0].vertices[i] = fbMatrix.mult(scene.models[0].vertices[i])
+        console.log("framebuffer coords: "+scene.models[0].vertices[i].data)
+    }
+    
+    for(var i = 0; i<scene.models[0].edges.length; i++){
+        //loop through each set of edges
+        for(var j = 0; j<scene.models[0].edges[i].length; j++){
+            //j is vertex index
+            var k = j+1;
+            //k should be second vertex index
+            if(k == scene.models[0].edges[i].length){
+                k = 0;
+            }
+            var n = scene.models[0].edges[i][j];
+            var m = scene.models[0].edges[i][k];
+
+            console.log("Point 1x: "+scene.models[0].vertices[n].values[0]);
+            console.log("Point 1y: "+scene.models[0].vertices[n].values[1]);
+
+            DrawLine(scene.models[0].vertices[n].values[0], scene.models[0].vertices[n].values[1], scene.models[0].vertices[m].values[0], scene.models[0].vertices[m].values[1])
+        }
+    }   
+
     /*
     //CLEAR OLD 
     view = document.getElementById('view');
