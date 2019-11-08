@@ -253,19 +253,6 @@ function ClipParallel() {
 
     result = [];
 
-    //while loop to loop through view vertices
-
-    /*
-    edges: [
-        [0, 1, 2, 3, 4, 0],
-        [5, 6, 7, 8, 9, 5],
-        [0, 5],
-        [1, 6],
-        [2, 7],
-        [3, 8],
-        [4, 9]
-    ]
-    */
     //i is the index in edges
     //loop through each set of edges
     for (var i = 0; i < scene.models[0].edges.length; i++) {
@@ -285,48 +272,20 @@ function ClipParallel() {
             var outcode0 = GetOutCodeParallel(vert0);
             var outcode1 = GetOutCodeParallel(vert1);
 
-            console.log(" before while loop \nOutcode0:" + outcode0);
-            console.log("Outcode1:" + outcode1);
-
-
             var delta_x = vert1.values[0] - vert0.values[0];
             var delta_y = vert1.values[1] - vert0.values[1];
             var b = vert0.values[1] - ((delta_y / delta_x) * vert0.values[0]);
             var done = false;
            while (!done) {
                 if ((outcode0 | outcode1) === 0) { //trivial accept
-                    console.log("tivial accept")
                     done = true;
-                    console.log("Vert0 vals before draw: ", vert0);
-                    console.log("Vert1 vals before draw: ", vert1);
-
-                    //if accept, draw line
-                    //for perspective, do Mper translation and then draw line
-    //!!!!!!!!!!!!It trivially accepts, but then doesnt draw the line.
                     fbMatrix = new Matrix(4, 4);
                     fbMatrix.values = [[view.width / 2, 0, 0, view.width / 2],
                                        [0, view.height / 2, 0, view.height / 2],
                                        [0, 0, 1, 0],
                                        [0, 0, 0, 1]];
-                    //fbMatrix.values[0][0] = (view.width / 2);
-                    //fbMatrix.values[0][3] = (view.width / 2);
-                    //fbMatrix.values[1][1] = (view.height / 2);
-                    //fbMatrix.values[1][3] = (view.height / 2);
-                    //fbMatrix.values[2][2] = 1;
-                    //fbMatrix.values[3][3] = 1;
                     vert0 = fbMatrix.mult(vert0);
-
-     //!!!!!!!!!!!!!!!!!!THIS IS THE LINE WHERE IT IS NOT PROCESSING CORRECTLY
                     vert1 = fbMatrix.mult(vert1);
-
-                    console.log("Vert0 vals frame buffer: ",vert0);
-                    console.log("Vert1 vals frame buffer: ",vert1);
-
-                    console.log("x: " + vert1.values[0] + "+ y:" +vert1.values[1])
-                    // for (var i = 0; i < scene.models[0].vertices.length; i++) {
-                    //     //put into framebuffer coordinates
-                    //     scene.models[0].vertices[i] = fbMatrix.mult(scene.models[0].vertices[i])
-                    // }
                     DrawLine(vert0.values[0], vert0.values[1], vert1.values[0], vert1.values[1]);
                 }
                 else if ((outcode0 & outcode1) !== 0) {
@@ -351,12 +310,7 @@ function ClipParallel() {
                         selected_pt.data[1][0] = (delta_y / delta_x) * selected_pt.data[0] + b;
                     }
                     else if ((selected_outcode & RIGHT) === RIGHT) {
-                        console.log("hit right")
-                        console.log("selected_pt.values[0]"+selected_pt.values[0])
                         selected_pt.data[0][0] = 1;
-    // It didn't actually change the value in the array needed to add .data
-                        console.log("selected_pt.values[0]"+selected_pt.values[0])
-
                         selected_pt.data[1][0] = (delta_y / delta_x) * selected_pt.data[0] + b;
                     }
                     else if ((selected_outcode & BOTTOM) === BOTTOM) {
@@ -373,23 +327,17 @@ function ClipParallel() {
                     else{
                         selected_pt.data[2][0] = -1;                  
                     }
-                    console.log("selected_pt.values @ end: "+selected_pt.values)
-
                     if (outcode0 > 0) {
-    ///This may not actually change the values of vert0 because x and y are showing up as Nan
                         vert0.data = selected_pt.data; 
-
                         outcode0 = GetOutCodeParallel(selected_pt);
                     }
                     else {
                         vert1.data = selected_pt.data;
-
                         outcode1 = GetOutCodeParallel(selected_pt);
                     }
 
                 }
-                console.log(" at end of while loop: \n Outcode0:" + outcode0);
-                console.log("Outcode1:" + outcode1);
+
             }
 
         }
