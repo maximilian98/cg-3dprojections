@@ -25,7 +25,7 @@ function Init() {
 
 
         view: {
-			
+
             type: 'perspective',
             vrp: Vector3(20, 0, -30),
             vpn: Vector3(1, 0, 1),
@@ -38,7 +38,7 @@ function Init() {
             vup: Vector3(0, 1, 0),
             prp: Vector3(8, 8, 30),
             clip: [-1, 17, -1, 17, 2, -23]*/
-			
+
         },
         models: [
             {
@@ -76,11 +76,11 @@ function Init() {
 function DrawScene() {
 
     //all for parallel ones
-    var transMatrix = mat4x4perspective(scene.view.vrp, scene.view.vpn, scene.view.vup, scene.view.prp, scene.view.clip);
-	console.log("This is NPer" + transMatrix.values);
+    var transMatrix = mat4x4parallel(scene.view.vrp, scene.view.vpn, scene.view.vup, scene.view.prp, scene.view.clip);
+    console.log("This is NPer" + transMatrix.values);
     var ogData = scene.models[0].vertices;
     //will need to loop though all models later on.
-    for(var i = 0; i<scene.models[0].vertices.length; i++){
+    for (var i = 0; i < scene.models[0].vertices.length; i++) {
         //will give in terms of tiny window 
         scene.models[0].vertices[i] = transMatrix.mult(scene.models[0].vertices[i])
         console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
@@ -96,41 +96,44 @@ function DrawScene() {
         scene.models[0].vertices[i] = mperMatrix.mult(scene.models[0].vertices[i]);
     }*/
 
-    //I think there is something wrong with this matrix
-    fbMatrix = new Matrix(4,4);
-    fbMatrix.values[0][0] = (view.width/2);
-    fbMatrix.values[0][3] = (view.width/2);
-    fbMatrix.values[1][1] = (view.height/2);
-    fbMatrix.values[1][3] = (view.height/2);
-    fbMatrix.values[2][2] = 1;
-    fbMatrix.values[3][3] = 1;
-
-    for(var i = 0; i<scene.models[0].vertices.length; i++){
-        //put into framebuffer coordinates
-        scene.models[0].vertices[i] = fbMatrix.mult(scene.models[0].vertices[i])
-    }
-
-	
+    //clip
+    ClipParallel();
     
-    for(var i = 0; i<scene.models[0].edges.length; i++){
+    //I think there is something wrong with this matrix
+    // fbMatrix = new Matrix(4, 4);
+    // fbMatrix.values[0][0] = (view.width / 2);
+    // fbMatrix.values[0][3] = (view.width / 2);
+    // fbMatrix.values[1][1] = (view.height / 2);
+    // fbMatrix.values[1][3] = (view.height / 2);
+    // fbMatrix.values[2][2] = 1;
+    // fbMatrix.values[3][3] = 1;
+
+    // for (var i = 0; i < scene.models[0].vertices.length; i++) {
+    //     //put into framebuffer coordinates
+    //     scene.models[0].vertices[i] = fbMatrix.mult(scene.models[0].vertices[i])
+    // }
+
+
+/*
+    for (var i = 0; i < scene.models[0].edges.length; i++) {
         //loop through each set of edges
-        for(var j = 0; j<scene.models[0].edges[i].length; j++){
+        for (var j = 0; j < scene.models[0].edges[i].length; j++) {
             //j is vertex index
-            var k = j+1;
+            var k = j + 1;
             //k should be second vertex index
-            if(k == scene.models[0].edges[i].length){
+            if (k == scene.models[0].edges[i].length) {
                 k = 0;
             }
             var n = scene.models[0].edges[i][j];
             var m = scene.models[0].edges[i][k];
 
-            console.log("Point 1x: "+scene.models[0].vertices[n].values[0]);
-            console.log("Point 1y: "+scene.models[0].vertices[n].values[1]);
+            // console.log("Point 1x: " + scene.models[0].vertices[n].values[0]);
+            // console.log("Point 1y: " + scene.models[0].vertices[n].values[1]);
 
             DrawLine(scene.models[0].vertices[n].values[0], scene.models[0].vertices[n].values[1], scene.models[0].vertices[m].values[0], scene.models[0].vertices[m].values[1])
         }
-    }   
-
+    }
+*/
     /*
     //CLEAR OLD 
     view = document.getElementById('view');
@@ -169,7 +172,7 @@ function DrawScene() {
     //take this matrix and multiply it by the verticies
     //then the veritices will be scaled to the window size and we will need to clip them to fit within
 
-	
+
     console.log(scene);
 }
 
@@ -240,174 +243,160 @@ function DrawLine(x1, y1, x2, y2) {
     ctx.fillRect(x2 - 2, y2 - 2, 4, 4);
 }
 
+function ClipParallel() {
+    var LEFT = 32;
+    var RIGHT = 16;
+    var BOTTOM = 8;
+    var TOP = 4;
+    var INFRONT = 2;
+    var BEHIND = 1;
+
+    result = [];
+
+    //while loop to loop through view vertices
+
+    for (var i = 0; i < scene.models[0].edges.length; i++) {
+        //loop through each set of edges
+        for (var j = 0; j < scene.models[0].edges[i].length; j++) {
+            //j is vertex index
+            var k = j + 1;
+            //k should be second vertex index
+            if (k == scene.models[0].edges[i].length) {
+                k = 0;
+            }
+            var n = scene.models[0].edges[i][j];
+            var m = scene.models[0].edges[i][k];
+
+            var vert0 = scene.models[0].vertices[n];
+            var vert1 = scene.models[0].vertices[m];
+
+            console.log("VERT 0: "+ vert0.values + " x: "+vert0[0]);
+            var outcode0 = GetOutCodeParallel(vert0);
+            var outcode1 = GetOutCodeParallel(vert1);
+
+            
+
+            var delta_x = vert0.x - vert1.x;
+            var delta_y = vert0.y - vert1.y;
+            var b = vert0.y - ((delta_y / delta_x) * vert0.x);
+            var done = false;
+            while (!done) {
+                if ((outcode0 | outcode1) === 0) { //trivial accept
+                    console.log("outcode true")
+                    done = true;
+                    //if accept, draw line
+                    //for perspective, do Mper translation and then draw line
+
+                    fbMatrix = new Matrix(4, 4);
+                    fbMatrix.values[0][0] = (view.width / 2);
+                    fbMatrix.values[0][3] = (view.width / 2);
+                    fbMatrix.values[1][1] = (view.height / 2);
+                    fbMatrix.values[1][3] = (view.height / 2);
+                    fbMatrix.values[2][2] = 1;
+                    fbMatrix.values[3][3] = 1;
+                    vert0 = fbMatrix.mult(vert0);
+                    vert1 = fbMatrix.mult(vert1);
+                    console.log("x: " + vert1.values[0] + "+ y:" +vert1.values[1])
+                    // for (var i = 0; i < scene.models[0].vertices.length; i++) {
+                    //     //put into framebuffer coordinates
+                    //     scene.models[0].vertices[i] = fbMatrix.mult(scene.models[0].vertices[i])
+                    // }
+                    DrawLine(vert0.x, vert0.y, vert1.x, vert1.y);
+                }
+                else if ((outcode0 & outcode1) !== 0) {
+                    done = true;
+                }
+                else {
+                    console.log("outcode")
+                    var selected_pt;
+                    var selected_outcode;
+                    if (outcode0 > 0) {
+                        selected_pt = vert0;
+                        selected_outcode = outcode0;
+                    }
+                    else {
+                        selected_pt = vert1;
+                        selected_outcode = outcode1;
+                    }
+
+                    if ((selected_outcode & LEFT) === LEFT) {
+                        selected_pt.x = -1;
+                        selected_pt.y = (delta_y / delta_x) * selected_pt.x + b;
+                    }
+                    else if ((selected_outcode & RIGHT) === RIGHT) {
+                        selected_pt.x = 1;
+                        selected_pt.y = (delta_y / delta_x) * selected_pt.x + b;
+                    }
+                    else if ((selected_outcode & BOTTOM) === BOTTOM) {
+                        selected_pt.x = (selected_pt.y - b) * (delta_x / delta_y);
+                        selected_pt.y = -1;
+                    }
+                    else if ((selected_outcode & TOP) === TOP){
+                        selected_pt.x = (selected_pt.y - b) * (delta_x / delta_y);
+                        selected_pt.y = 1;
+                    }
+                    else if ((selected_outcode & INFRONT) === INFRONT){
+                        selected_pt.z = 0;
+                    }
+                    else{
+                        selected_pt.z = -1;                  
+                    }
+
+                    if (outcode0 > 0) {
+                        outcode0 = GetOutCodeParallel(vert0);
+                    }
+                    else {
+                        outcode1 = GetOutCodeParallel(vert1);
+                    }
+
+                }
+            }
+        }
+    }
 
 
-/*
- * var LEFT = 8;
-var RIGHT = 4;
-var BOTTOM = 2;
-var TOP = 1;
-
-function Init() {
-	console.log("Init");
-	var w = 600;
-	var h = 600;
-
-	// Get handle to HTML canvas element
-	var mycanvas = document.getElementById("mycanvas");
-
-	// Set canvas width and height (in pixels)
-	mycanvas.width = w;
-	mycanvas.height = h;
-
-	// Get handle to 2D rendering context
-	var ctx = mycanvas.getContext("2d");
-
-	// Get copy of the framebuffer
-	var framebuffer = ctx.getImageData(0, 0, w, h);
-
-	//
-	// Operations to edit the framebuffer ...
-	//
-	var index = GetPixelIndex(300, 300, framebuffer.width);
-	var color0 = [255, 0, 0, 255];
-	var color1 = [74.989, 255, 0, 255];
-	var color2 = [255, 100, 65, 255];
-	var color3 = [255, 0, 255, 255];
 
 
-	var point1 = {x: {-10},y: {-800}};
-	var point2 = {x: {300}, y: {300}};
-	var view = {x_min: {0}, y_min: {0}, x_max: {600}, y_max: {600}};
 
-	var result = ClipLine(point1, point2, view, color0, ctx);
 
-	RealDrawLine(result.pt0, result.pt1, view
+
+
+}
+function ClipPerspective() {
+
 }
 
-function ClipLine(pt0, pt1, view) {
-	/*var m = (pt1[1] - pt0[1])/(pt1[0]-pt0[0]);
-	var y;
-	var x;
-	var bitOr = GetOutCode(pt0, view) | GetOutCode(pt1, view);
-	var bitAnd = GetOutCode(pt0, view) & GetOutCode(pt1, view);
-	console.log(GetOutCode(pt0, view));
-	if (GetOutCode(pt0, view) === 0 && GetOutCode(pt1, view) ===0) {
-		RealDrawLine(pt0[0], pt0[1], pt1[0], pt1[1], color, ctx);
-	}
-	else if (GetOutCode(pt0, view) >= 8){
-		pt0[0] = view[0];
-		y = m * pt0[0] + pt1[1];
-		console.log('y: ' + y + ' pt1[0]: ' + pt1[0]);
-
-		RealDrawLine(pt0[0], y, pt1[0], pt1[1], color, ctx);
-	}
-
-result = { pt0: {}, pt1: {} };
-
-var outcode0 = GetOutCode(pt0, view);
-var outcode1 = GetOutCode(pt1, view);
-
-var delta_x = pt0.x - pt1.x;
-var delta_y = pt0.y - pt1.y;
-
-var b = pt0.y - ((delta_y / delta_x) * pt0.x);
-
-var done = false;
-while (!done) {
-    if ((outcode0 | outcode1) === 0) { //trivial accept
-        done = true;
-        result.pt0.x = pt0.x;
-        result.pt0.y = pt0.y;
-        result.pt1.x = pt1.x;
-        result.pt1.y = pt1.y;
-    }
-    else if ((outcode0 & outcode1) !== 0) {
-        done = true;
-        result = null;
-    }
-    else {
-        var selected_pt;
-        var selected_outcode;
-        if (outcode0 > 0) {
-            selected_pt = pt0;
-            selected_outcode = outcode0;
-        }
-        else {
-            selected_pt = pt1;
-            selected_outcode = outcode1;
-        }
-
-        if ((selected_outcode & LEFT) === LEFT) {
-            selected_pt.x = view.x_min;
-            selected_pt.y = (delta_y / delta_x) * selected_pt.x + b;
-        }
-        else if ((selected_outcode & RIGHT) === RIGHT) ) {
-            selected_pt.x = view.x_max;
-            selected_pt.y = (delta_y / delta_x) * selected_pt.x + b;
-        }
-			else if ((selected_outcode & BOTTOM) === BOTTOM) ) {
-            selected_pt.x = (selected_pt.y - b) * (delta_x / delta_y);
-            selected_pt.y = view.y_min;
-        }
-			else {
-            selected_pt.x = (selected_pt.y - b) * (delta_x / delta_y);
-            selected_pt.y = view.y_max;
-        }
-
-        if (outcode0 > 0) {
-            outcode0 = selected_outcode;
-        }
-        else {
-            outcode1 = selected_outcode;
-        }
-
-    }
-}
-
-return result;
-}
-
-function GetOutCode(pt, view) {
+function GetOutCodeParallel(vector) {
     var outcode = 0;
-    //right
-    if (pt.x > view.x_max) {
-        outcode = outcode + 4;
+    //left right
+    if (vector.values.x < -1) {
+        outcode += 32;
     }
-    //left
-    else if (pt.x < view.x_min) {
-        outcode = outcode + 8;
+    else if (vector.values.x > 1) {
+        outcode += 16
     }
-    //top
-    if (pt.y > view.y_max) {
-        outcode = outcode + 1;
+    //top bottom
+    if (vector.values.y < -1) {
+        outcode += 8
     }
-    //bottom
-    else if (pt.y < view.y_min) {
-        outcode = outcode + 2;
+    else if (vector.values.y > 1) {
+        outcode += 4
+    }
+    //near far
+    if (vector.values.z > 0) {
+        outcode += 2
+    }
+    else if (vector.values.z < -1) {
+        outcode += 1
     }
     return outcode;
 }
 
-function RealDrawLine(x0, y0, x1, y1, color, ctx) {
-    ctx.strokeStyle = "rgba(" + "," + color[0] + "," + color[0] +
-        "," + color[0] + "," + color[3] / 255 + ")";
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.stroke();
+/*
+
+function ClipLine(pt0, pt1, view) {
+
+
 }
 
-
-function GetPixelIndex(x, y, fb_width) {
-    return 4 * y * fb_width + 4 * x;
-}
-
-function SetFrameBufferColor(framebuffer, px, color) {
-    framebuffer.data[px] = color[0];
-    framebuffer.data[px + 1] = color[1];
-    framebuffer.data[px + 2] = color[2];
-    framebuffer.data[px + 3] = color[3];
-
-
-} */
+ */
