@@ -243,13 +243,15 @@ function DrawLine(x1, y1, x2, y2) {
     ctx.fillRect(x2 - 2, y2 - 2, 4, 4);
 }
 
-function ClipParallel() {
-    var LEFT = 32;
+	var LEFT = 32;
     var RIGHT = 16;
     var BOTTOM = 8;
     var TOP = 4;
     var INFRONT = 2;
     var BEHIND = 1;
+	
+	
+function ClipParallel() {
 
     result = [];
 
@@ -343,16 +345,113 @@ function ClipParallel() {
         }
     }
 
-
-
-
-
-
-
-
 }
 function ClipPerspective() {
+	
+	result = [];
+	zmin = (((-1)*scene.view.prp.z) + scene.view.clip[4])/ (((-1)*scene.view.prp.z) + scene.view.clip[5]);
 
+    //i is the index in edges
+    //loop through each set of edges
+    for (var i = 0; i < scene.models[0].edges.length; i++) {
+        //index j is vert0
+        for (var j = 0; j < scene.models[0].edges[i].length-1; j++) {
+            console.log("I: "+i+" J:" + j);
+            //index k is vert1
+            var k = j + 1;
+            //n is value for vert0 index
+            var n = scene.models[0].edges[i][j];
+            //m is value for vert0 index
+            var m = scene.models[0].edges[i][k];
+
+            var vert0 = scene.models[0].vertices[n];
+            var vert1 = scene.models[0].vertices[m];
+
+            var outcode0 = GetOutCodePerspective(vert0, zmin);
+            var outcode1 = GetOutCodePerspective(vert1, zmin);
+
+            var delta_x = vert1.values[0] - vert0.values[0];
+            var delta_y = vert1.values[1] - vert0.values[1];
+			var delta_z=  vert1.values[2] - vert0.values[2];
+            var done = false;
+           while (!done) {
+                if ((outcode0 | outcode1) === 0) { //trivial accept
+                    done = true;
+					
+					//Mper
+					mPer = new Matrix(4, 4);
+                    mPer.values = [[1, 0, 0, 0],
+                                       [0, 1, 0, 0],
+                                       [0, 0, 1, 0],
+                                       [0, 0, -1, 0]];
+					vert0 = mPer.mult(vert0);
+                    vert1 = mPer.mult(vert1);
+                    fbMatrix = new Matrix(4, 4);
+                    fbMatrix.values = [[view.width / 2, 0, 0, view.width / 2],
+                                       [0, view.height / 2, 0, view.height / 2],
+                                       [0, 0, 1, 0],
+                                       [0, 0, 0, 1]];
+                    vert0 = fbMatrix.mult(vert0);
+                    vert1 = fbMatrix.mult(vert1);
+                    DrawLine(vert0.values[0], vert0.values[1], vert1.values[0], vert1.values[1]);
+                }
+                else if ((outcode0 & outcode1) !== 0) {
+                    console.log("trivial reject")
+                    done = true;
+                }
+                else {
+                    console.log("neither trivial accept nor reject")
+                    var selected_pt;
+                    var selected_outcode;
+                    if (outcode0 > 0) {
+                        selected_pt = vert0;
+                        selected_outcode = outcode0;
+                    }
+                    else {
+                        selected_pt = vert1;
+                        selected_outcode = outcode1;
+                    }
+                    console.log("selected_pt.values: "+selected_pt.values)
+                    if ((selected_outcode & LEFT) === LEFT) {
+						var t = (-selected_pt.data[0][0] + selected_pt.data[2][0])/(delta_x-delta_z);
+                        selected_pt.data[0][0] = selected_pt.data[0][0] + (t*delta_x);
+                        selected_pt.data[1][0] = selected_pt.data[1][0] + (t*delta_y);
+						selected_pt.data[2][0] = selected_pt.data[2][0] + (t*delta_z)
+						
+                    }
+                    else if ((selected_outcode & RIGHT) === RIGHT) {
+                        selected_pt.data[0][0] = 1;
+                        selected_pt.data[1][0] = (delta_y / delta_x) * selected_pt.data[0] + b;
+                    }
+                    else if ((selected_outcode & BOTTOM) === BOTTOM) {
+                        selected_pt.data[0][0] = (selected_pt.data[1] - b) * (delta_x / delta_y);
+                        selected_pt.data[1][0] = -1;
+                    }
+                    else if ((selected_outcode & TOP) === TOP){
+                        selected_pt.data[0][0] = (selected_pt.data[1] - b) * (delta_x / delta_y);
+                        selected_pt.data[1][0] = 1;
+                    }
+                    else if ((selected_outcode & INFRONT) === INFRONT){
+                        selected_pt.data[2][0] = 0;
+                    }
+                    else{
+                        selected_pt.data[2][0] = -1;                  
+                    }
+                    if (outcode0 > 0) {
+                        vert0.data = selected_pt.data; 
+                        outcode0 = GetOutCodePerspective(selected_pt, zmin);
+                    }
+                    else {
+                        vert1.data = selected_pt.data;
+                        outcode1 = GetOutCodePerspective(selected_pt, zmin);
+                    }
+
+                }
+
+            }
+
+        }
+    }
 }
 
 function GetOutCodeParallel(vector) {
@@ -373,6 +472,32 @@ function GetOutCodeParallel(vector) {
     }
     //near far
     if (vector.values[2] > 0) {
+        outcode += 2
+    }
+    else if (vector.values[2] < -1) {
+        outcode += 1
+    }
+    return outcode;
+}
+
+function GetOutCodePerspective(vector, zmin) {
+    var outcode = 0;
+    //left right
+    if (vector.values[0] < (vector.values[2]) {
+        outcode += 32;
+    }
+    else if (vector.values[0] > (-1)*vector.values[2]) {
+        outcode += 16
+    }
+    //top bottom
+    if (vector.values[1] < vector.values[2]) {
+        outcode += 8
+    }
+    else if (vector.values[1] > (-1)*vector.values[2]) {
+        outcode += 4
+    }
+    //near far
+    if (vector.values[2] > zmin) {
         outcode += 2
     }
     else if (vector.values[2] < -1) {
