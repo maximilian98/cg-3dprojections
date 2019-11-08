@@ -293,31 +293,34 @@ function ClipParallel() {
             var delta_y = vert1.values[1] - vert0.values[1];
             var b = vert0.values[1] - ((delta_y / delta_x) * vert0.values[0]);
             var done = false;
-            var stop = 0;
-           while (!done&&stop<15) {
+           while (!done) {
                 if ((outcode0 | outcode1) === 0) { //trivial accept
                     console.log("tivial accept")
                     done = true;
-                    console.log("Vert0 vals before draw: "+vert0.values);
-                    console.log("Vert1 vals before draw: "+vert1.values);
+                    console.log("Vert0 vals before draw: ", vert0);
+                    console.log("Vert1 vals before draw: ", vert1);
 
                     //if accept, draw line
                     //for perspective, do Mper translation and then draw line
     //!!!!!!!!!!!!It trivially accepts, but then doesnt draw the line.
                     fbMatrix = new Matrix(4, 4);
-                    fbMatrix.values[0][0] = (view.width / 2);
-                    fbMatrix.values[0][3] = (view.width / 2);
-                    fbMatrix.values[1][1] = (view.height / 2);
-                    fbMatrix.values[1][3] = (view.height / 2);
-                    fbMatrix.values[2][2] = 1;
-                    fbMatrix.values[3][3] = 1;
+                    fbMatrix.values = [[view.width / 2, 0, 0, view.width / 2],
+                                       [0, view.height / 2, 0, view.height / 2],
+                                       [0, 0, 1, 0],
+                                       [0, 0, 0, 1]];
+                    //fbMatrix.values[0][0] = (view.width / 2);
+                    //fbMatrix.values[0][3] = (view.width / 2);
+                    //fbMatrix.values[1][1] = (view.height / 2);
+                    //fbMatrix.values[1][3] = (view.height / 2);
+                    //fbMatrix.values[2][2] = 1;
+                    //fbMatrix.values[3][3] = 1;
                     vert0 = fbMatrix.mult(vert0);
 
      //!!!!!!!!!!!!!!!!!!THIS IS THE LINE WHERE IT IS NOT PROCESSING CORRECTLY
                     vert1 = fbMatrix.mult(vert1);
 
-                    console.log("Vert0 vals frame buffer: "+vert0.values);
-                    console.log("Vert1 vals frame buffer: "+vert1.values);
+                    console.log("Vert0 vals frame buffer: ",vert0);
+                    console.log("Vert1 vals frame buffer: ",vert1);
 
                     console.log("x: " + vert1.values[0] + "+ y:" +vert1.values[1])
                     // for (var i = 0; i < scene.models[0].vertices.length; i++) {
@@ -344,31 +347,31 @@ function ClipParallel() {
                     }
                     console.log("selected_pt.values: "+selected_pt.values)
                     if ((selected_outcode & LEFT) === LEFT) {
-                        selected_pt.data[0] = -1;
-                        selected_pt.data[1] = (delta_y / delta_x) * selected_pt.data[0] + b;
+                        selected_pt.data[0][0] = -1;
+                        selected_pt.data[1][0] = (delta_y / delta_x) * selected_pt.data[0] + b;
                     }
                     else if ((selected_outcode & RIGHT) === RIGHT) {
                         console.log("hit right")
                         console.log("selected_pt.values[0]"+selected_pt.values[0])
-                        selected_pt.data[0] = 1;
+                        selected_pt.data[0][0] = 1;
     // It didn't actually change the value in the array needed to add .data
                         console.log("selected_pt.values[0]"+selected_pt.values[0])
 
-                        selected_pt.data[1] = (delta_y / delta_x) * selected_pt.data[0] + b;
+                        selected_pt.data[1][0] = (delta_y / delta_x) * selected_pt.data[0] + b;
                     }
                     else if ((selected_outcode & BOTTOM) === BOTTOM) {
-                        selected_pt.data[0] = (selected_pt.data[1] - b) * (delta_x / delta_y);
-                        selected_pt.data[1] = -1;
+                        selected_pt.data[0][0] = (selected_pt.data[1] - b) * (delta_x / delta_y);
+                        selected_pt.data[1][0] = -1;
                     }
                     else if ((selected_outcode & TOP) === TOP){
-                        selected_pt.data[0] = (selected_pt.data[1] - b) * (delta_x / delta_y);
-                        selected_pt.data[1] = 1;
+                        selected_pt.data[0][0] = (selected_pt.data[1] - b) * (delta_x / delta_y);
+                        selected_pt.data[1][0] = 1;
                     }
                     else if ((selected_outcode & INFRONT) === INFRONT){
-                        selected_pt.data[2] = 0;
+                        selected_pt.data[2][0] = 0;
                     }
                     else{
-                        selected_pt.data[2] = -1;                  
+                        selected_pt.data[2][0] = -1;                  
                     }
                     console.log("selected_pt.values @ end: "+selected_pt.values)
 
@@ -387,7 +390,6 @@ function ClipParallel() {
                 }
                 console.log(" at end of while loop: \n Outcode0:" + outcode0);
                 console.log("Outcode1:" + outcode1);
-                stop++;
             }
 
         }
