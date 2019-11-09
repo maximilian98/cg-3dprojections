@@ -26,18 +26,21 @@ function Init() {
 
         view: {
 
-            type: 'perspective',
+            type: 'parallel',
+			/*
             vrp: Vector3(20, 0, -30),
             vpn: Vector3(1, 0, 1),
             vup: Vector3(0, 1, 0),
             prp: Vector3(14, 20, 26),
             clip: [-20, 20, -4, 36, 1, -50]
-			/*
-			vrp: Vector3(0, 0, 54),
+			*/
+			
+			vrp: Vector3(0, 0, -54),
             vpn: Vector3(0, 0, 1),
             vup: Vector3(0, 1, 0),
             prp: Vector3(8, 8, 30),
-            clip: [-1, 17, -1, 17, 2, -23]*/
+            clip: [-1, 17, -1, 17, 2, -23]
+			
 
         },
         models: [
@@ -75,65 +78,32 @@ function Init() {
 // Main drawing code here! Use information contained in variable `scene`
 function DrawScene() {
 
-    //all for parallel ones
-    var transMatrix = mat4x4parallel(scene.view.vrp, scene.view.vpn, scene.view.vup, scene.view.prp, scene.view.clip);
-    console.log("This is NPer" + transMatrix.values);
-    var ogData = scene.models[0].vertices;
-    //will need to loop though all models later on.
-    for (var i = 0; i < scene.models[0].vertices.length; i++) {
-        //will give in terms of tiny window 
-        scene.models[0].vertices[i] = transMatrix.mult(scene.models[0].vertices[i])
-        console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
-    }
-	/*mperMatrix = new Matrix(4,4);
-    mperMatrix.values[0][0] = 1;
-    mperMatrix.values[1][1] = 1;
-    mperMatrix.values[2][2] = 1;
-    mperMatrix.values[3][2] = -1;
+	if(scene.view.type === "perspective"){
+		var transMatrix = mat4x4perspective(scene.view.vrp, scene.view.vpn, scene.view.vup, scene.view.prp, scene.view.clip);
+		console.log("This is NPer" + transMatrix.values);
+		var ogData = scene.models[0].vertices;
+		//will need to loop though all models later on.
+		for (var i = 0; i < scene.models[0].vertices.length; i++) {
+			//will give in terms of tiny window 
+			scene.models[0].vertices[i] = transMatrix.mult(scene.models[0].vertices[i])
+			console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
+		}
+		ClipPerspective();
+	}
+	else if(scene.view.type === "parallel"){
+		var transMatrix = mat4x4parallel(scene.view.vrp, scene.view.vpn, scene.view.vup, scene.view.prp, scene.view.clip);
+		console.log("This is NPer" + transMatrix.values);
+		var ogData = scene.models[0].vertices;
+		//will need to loop though all models later on.
+		for (var i = 0; i < scene.models[0].vertices.length; i++) {
+			//will give in terms of tiny window 
+			scene.models[0].vertices[i] = transMatrix.mult(scene.models[0].vertices[i])
+			console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
+		}
+		ClipParallel();
+	}
+	else{}
 	
-	for(var i = 0; i<scene.models[0].vertices.length; i++){
-        //put into framebuffer coordinates
-        scene.models[0].vertices[i] = mperMatrix.mult(scene.models[0].vertices[i]);
-    }*/
-
-    //clip
-     ClipParallel();
-/*    
-    //I think there is something wrong with this matrix
-    fbMatrix = new Matrix(4, 4);
-    fbMatrix.values[0][0] = (view.width / 2);
-    fbMatrix.values[0][3] = (view.width / 2);
-    fbMatrix.values[1][1] = (view.height / 2);
-    fbMatrix.values[1][3] = (view.height / 2);
-    fbMatrix.values[2][2] = 1;
-    fbMatrix.values[3][3] = 1;
-
-    for (var i = 0; i < scene.models[0].vertices.length; i++) {
-        //put into framebuffer coordinates
-        scene.models[0].vertices[i] = fbMatrix.mult(scene.models[0].vertices[i])
-    }
-
-
-
-    for (var i = 0; i < scene.models[0].edges.length; i++) {
-        //loop through each set of edges
-        for (var j = 0; j < scene.models[0].edges[i].length; j++) {
-            //j is vertex index
-            var k = j + 1;
-            //k should be second vertex index
-            if (k == scene.models[0].edges[i].length) {
-                k = 0;
-            }
-            var n = scene.models[0].edges[i][j];
-            var m = scene.models[0].edges[i][k];
-
-            // console.log("Point 1x: " + scene.models[0].vertices[n].values[0]);
-            // console.log("Point 1y: " + scene.models[0].vertices[n].values[1]);
-
-            DrawLine(scene.models[0].vertices[n].values[0], scene.models[0].vertices[n].values[1], scene.models[0].vertices[m].values[0], scene.models[0].vertices[m].values[1])
-        }
-    }
-*/
     /*
     //CLEAR OLD 
     view = document.getElementById('view');
@@ -166,13 +136,6 @@ function DrawScene() {
     prev_time = start_time;
     window.requestAnimationFrame(Animate);
     */
-
-
-    //will need to get the tranformation matrix, which should be return by the parallel and perpective calculations
-    //take this matrix and multiply it by the verticies
-    //then the veritices will be scaled to the window size and we will need to clip them to fit within
-
-
     console.log(scene);
 }
 
@@ -349,7 +312,8 @@ function ClipParallel() {
 function ClipPerspective() {
 	
 	result = [];
-	zmin = (((-1)*scene.view.prp.z) + scene.view.clip[4])/ (((-1)*scene.view.prp.z) + scene.view.clip[5]);
+	var zmin = (-1) * (((-1)*scene.view.prp.z) + scene.view.clip[4])/ ((-1)*(scene.view.prp.z) + scene.view.clip[5]);
+	console.log("zmin is" + zmin);
 
     //i is the index in edges
     //loop through each set of edges
@@ -374,18 +338,22 @@ function ClipPerspective() {
             var delta_y = vert1.values[1] - vert0.values[1];
 			var delta_z=  vert1.values[2] - vert0.values[2];
             var done = false;
+			var stop = 0;
            while (!done) {
+			   console.log("outcode0 " + outcode0 + " outcode1 " + outcode1);
                 if ((outcode0 | outcode1) === 0) { //trivial accept
                     done = true;
 					
 					//Mper
+					/*
 					mPer = new Matrix(4, 4);
                     mPer.values = [[1, 0, 0, 0],
-                                       [0, 1, 0, 0],
-                                       [0, 0, 1, 0],
-                                       [0, 0, -1, 0]];
+                                   [0, 1, 0, 0],
+                                   [0, 0, 1, 0],
+                                   [0, 0, -1, 0]];
 					vert0 = mPer.mult(vert0);
                     vert1 = mPer.mult(vert1);
+					*/
                     fbMatrix = new Matrix(4, 4);
                     fbMatrix.values = [[view.width / 2, 0, 0, view.width / 2],
                                        [0, view.height / 2, 0, view.height / 2],
@@ -416,26 +384,38 @@ function ClipPerspective() {
 						var t = (-selected_pt.data[0][0] + selected_pt.data[2][0])/(delta_x-delta_z);
                         selected_pt.data[0][0] = selected_pt.data[0][0] + (t*delta_x);
                         selected_pt.data[1][0] = selected_pt.data[1][0] + (t*delta_y);
-						selected_pt.data[2][0] = selected_pt.data[2][0] + (t*delta_z)
+						selected_pt.data[2][0] = selected_pt.data[2][0] + (t*delta_z);
 						
                     }
                     else if ((selected_outcode & RIGHT) === RIGHT) {
-                        selected_pt.data[0][0] = 1;
-                        selected_pt.data[1][0] = (delta_y / delta_x) * selected_pt.data[0] + b;
+                        var t = (selected_pt.data[0][0] + selected_pt.data[2][0])/(-delta_x-delta_z);
+                        selected_pt.data[0][0] = selected_pt.data[0][0] + (t*delta_x);
+                        selected_pt.data[1][0] = selected_pt.data[1][0] + (t*delta_y);
+						selected_pt.data[2][0] = selected_pt.data[2][0] + (t*delta_z);
                     }
                     else if ((selected_outcode & BOTTOM) === BOTTOM) {
-                        selected_pt.data[0][0] = (selected_pt.data[1] - b) * (delta_x / delta_y);
-                        selected_pt.data[1][0] = -1;
+                        var t = (-selected_pt.data[1][0] + selected_pt.data[2][0])/(delta_y-delta_z);
+                        selected_pt.data[0][0] = selected_pt.data[0][0] + (t*delta_x);
+                        selected_pt.data[1][0] = selected_pt.data[1][0] + (t*delta_y);
+						selected_pt.data[2][0] = selected_pt.data[2][0] + (t*delta_z);
                     }
                     else if ((selected_outcode & TOP) === TOP){
-                        selected_pt.data[0][0] = (selected_pt.data[1] - b) * (delta_x / delta_y);
-                        selected_pt.data[1][0] = 1;
+						var t = (selected_pt.data[1][0] + selected_pt.data[2][0])/(-delta_y-delta_z);
+                        selected_pt.data[0][0] = selected_pt.data[0][0] + (t*delta_x);
+                        selected_pt.data[1][0] = selected_pt.data[1][0] + (t*delta_y);
+						selected_pt.data[2][0] = selected_pt.data[2][0] + (t*delta_z);;
                     }
                     else if ((selected_outcode & INFRONT) === INFRONT){
-                        selected_pt.data[2][0] = 0;
+						var t = (selected_pt.data[2][0] -zmin )/(-delta_z);
+                        selected_pt.data[0][0] = selected_pt.data[0][0] + (t*delta_x);
+                        selected_pt.data[1][0] = selected_pt.data[1][0] + (t*delta_y);
+						selected_pt.data[2][0] = selected_pt.data[2][0] + (t*delta_z);
                     }
                     else{
-                        selected_pt.data[2][0] = -1;                  
+						var t = (-selected_pt.data[2][0] -1 )/(delta_z);
+                        selected_pt.data[0][0] = selected_pt.data[0][0] + (t*delta_x);
+                        selected_pt.data[1][0] = selected_pt.data[1][0] + (t*delta_y);
+						selected_pt.data[2][0] = selected_pt.data[2][0] + (t*delta_z);                 
                     }
                     if (outcode0 > 0) {
                         vert0.data = selected_pt.data; 
@@ -447,7 +427,7 @@ function ClipPerspective() {
                     }
 
                 }
-
+				stop++;
             }
 
         }
@@ -482,26 +462,33 @@ function GetOutCodeParallel(vector) {
 
 function GetOutCodePerspective(vector, zmin) {
     var outcode = 0;
+	console.log("x is " + vector.values[0][0] + " y is " + vector.values[1][0] + " z is " + vector.values[2][0]);
     //left right
-    if (vector.values[0] < (vector.values[2]) {
+    if (vector.values[0][0] < (vector.values[2][0])) {
         outcode += 32;
+		console.log("left of left");
     }
-    else if (vector.values[0] > (-1)*vector.values[2]) {
+    else if (vector.values[0][0] > (-1)*vector.values[2][0]) {
         outcode += 16
+		console.log("right of right");
     }
     //top bottom
-    if (vector.values[1] < vector.values[2]) {
+    if (vector.values[1][0] < vector.values[2][0]) {
         outcode += 8
+		console.log("bottom of bottom");
     }
-    else if (vector.values[1] > (-1)*vector.values[2]) {
+    else if (vector.values[1][0] > (-1)*vector.values[2][0]) {
         outcode += 4
+		console.log("top of top");
     }
     //near far
-    if (vector.values[2] > zmin) {
+    if (vector.values[2][0] > zmin) {
         outcode += 2
+		console.log("near of near");
     }
-    else if (vector.values[2] < -1) {
+    else if (vector.values[2][0] < -1) {
         outcode += 1
+		console.log("back of back");
     }
     return outcode;
 }
