@@ -28,20 +28,20 @@ function Init() {
 
             type: 'parallel',
 			
-			
+			/*	
             vrp: Vector3(20, 0, -30),
             vpn: Vector3(1, 0, 1),
             vup: Vector3(0, 1, 0),
             prp: Vector3(14, 20, 26),
             clip: [-20, 20, -4, 36, 1, -50]
-			/*
-			
+		
+			*/	
 			vrp: Vector3(0, 0, -54),
             vpn: Vector3(0, 0, 1),
             vup: Vector3(0, 1, 0),
             prp: Vector3(8, 8, 30),
             clip: [-1, 17, -1, 17, 2, -23]
-			*/
+		
 			
 			
 
@@ -88,9 +88,10 @@ function DrawScene() {
 		//will need to loop though all models later on.
 		for (var i = 0; i < scene.models[0].vertices.length; i++) {
 			//will give in terms of tiny window 
-			scene.models[0].vertices[i] = transMatrix.mult(scene.models[0].vertices[i])
+			scene.models[0].vertices[i] = Matrix.multiply(transMatrix, scene.models[0].vertices[i]);
 			//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
-		}
+        }
+        
 		ClipPerspective();
 	}
 	else if(scene.view.type === "parallel"){
@@ -102,41 +103,41 @@ function DrawScene() {
 		//will need to loop though all models later on.
 		for (var i = 0; i < scene.models[0].vertices.length; i++) {
 			//will give in terms of tiny window 
-			scene.models[0].vertices[i] = transMatrix.mult(scene.models[0].vertices[i])
+			scene.models[0].vertices[i] = Matrix.multiply(transMatrix, scene.models[0].vertices[i]);
 			//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
 		}
 		
 //added just to draw the correct lines		
-	for (var i = 0; i < scene.models[0].edges.length; i++) {
-        //index j is vert0
-        for (var j = 0; j < scene.models[0].edges[i].length-1; j++) {
-            console.log("I: "+i+" J:" + j);
-            //index k is vert1
-            var k = j + 1;
-            //n is value for vert0 index
-            var n = scene.models[0].edges[i][j];
-            //m is value for vert0 index
-            var m = scene.models[0].edges[i][k];
+	// for (var i = 0; i < scene.models[0].edges.length; i++) {
+    //     //index j is vert0
+    //     for (var j = 0; j < scene.models[0].edges[i].length-1; j++) {
+    //         console.log("I: "+i+" J:" + j);
+    //         //index k is vert1
+    //         var k = j + 1;
+    //         //n is value for vert0 index
+    //         var n = scene.models[0].edges[i][j];
+    //         //m is value for vert0 index
+    //         var m = scene.models[0].edges[i][k];
 
-            var vert0 = scene.models[0].vertices[n];
-            var vert1 = scene.models[0].vertices[m];
+    //         var vert0 = scene.models[0].vertices[n];
+    //         var vert1 = scene.models[0].vertices[m];
 			
-		            fbMatrix = new Matrix(4, 4);
-                    fbMatrix.values = [[view.width / 2, 0, 0, view.width / 2],
-                                       [0, view.height / 2, 0, view.height / 2],
-                                       [0, 0, 1, 0],
-                                       [0, 0, 0, 1]];
-                    vert0 = new Vector(fbMatrix.mult(vert0));
-                    vert1 = new Vector(fbMatrix.mult(vert1));
+	// 	            fbMatrix = new Matrix(4, 4);
+    //                 fbMatrix.values = [[view.width / 2, 0, 0, view.width / 2],
+    //                                    [0, view.height / 2, 0, view.height / 2],
+    //                                    [0, 0, 1, 0],
+    //                                    [0, 0, 0, 1]];
+    //                 vert0 = new Vector(fbMatrix.mult(vert0));
+    //                 vert1 = new Vector(fbMatrix.mult(vert1));
 					
-                    DrawLine(vert0.x/vert0.w, vert0.y/vert0.w, vert1.x/vert1.w, vert1.y/vert1.w);			
+    //                 DrawLine(vert0.x/vert0.w, vert0.y/vert0.w, vert1.x/vert1.w, vert1.y/vert1.w);			
 			
-		}
-	}
+	// 	}
+	// }
 		
 
 		
-		//ClipParallel();
+		ClipParallel();
 	}
 	else{}
 	
@@ -220,7 +221,7 @@ function OnKeyDown(event) {
 			    scene = {
 
         view: {
-            type: 'parallel',
+            type: 'perspective',
 			
             vrp: Vector3(20, 0, -30),
             vpn: Vector3(1, 0, 1),
@@ -263,29 +264,36 @@ function OnKeyDown(event) {
             }
         ]
 		};
-	var n = scene.view.vpn;
+	var n = new Vector(scene.view.vpn);
     n.normalize();
     var u = scene.view.vup.cross(n);
+    u.normalize();
     var v = n.cross(u);
     switch (event.keyCode) {
 		
         case 37: // LEFT Arrow
             console.log("left");
 			horizontalMovement --;
-			u.scale(horizontalMovement);
-			scene.view.vrp = scene.view.vrp.add(u)
+            u.scale(horizontalMovement);
+            n.scale(depth);
+            scene.view.vrp = scene.view.vrp.add(u)
+            scene.view.vrp = scene.view.vrp.add(n)
 			DrawScene();
             break;
         case 38: // UP Arrow
             console.log("up");
-			depth ++;
+			depth --;
 			console.log("depth:" + depth)
 			console.log("n before: ", n);
 			//something wrong with this scaling
-			n.scale(depth);
+            n.scale(depth);
+            u.scale(horizontalMovement);
+
 			console.log("n after: ", n);
 			console.log("vrp before ", scene.view.vrp);
-			scene.view.vrp = scene.view.vrp.add(n)
+            scene.view.vrp = scene.view.vrp.add(n)
+            scene.view.vrp = scene.view.vrp.add(u)
+
 			console.log("vrp after ", scene.view.vrp);
 
 			DrawScene();
@@ -298,17 +306,23 @@ function OnKeyDown(event) {
 			//holder = new Vector(result);
 			
 			//scene.view.vrp = holder.mult(scene.view.vrp);
-			
-			u.scale(horizontalMovement);
+            n.scale(depth);
+
+            u.scale(horizontalMovement);
+            scene.view.vrp = scene.view.vrp.add(n)
 			scene.view.vrp = scene.view.vrp.add(u)
 
 			DrawScene();
             break;
         case 40: // DOWN Arrow
             console.log("down");
-			depth --;
-			n.scale(depth);
-			scene.view.vrp = scene.view.vrp.add(n)
+			depth ++;
+            n.scale(depth);
+            u.scale(horizontalMovement);
+
+            scene.view.vrp = scene.view.vrp.add(n)
+            scene.view.vrp = scene.view.vrp.add(u)
+
 			DrawScene();
             break;
     }
@@ -352,8 +366,8 @@ function ClipParallel() {
             //m is value for vert0 index
             var m = scene.models[0].edges[i][k];
 
-            var vert0 = scene.models[0].vertices[n];
-            var vert1 = scene.models[0].vertices[m];
+            var vert0 = new Vector(scene.models[0].vertices[n]);
+            var vert1 = new Vector(scene.models[0].vertices[m]);
 
             var outcode0 = GetOutCodeParallel(vert0);
             var outcode1 = GetOutCodeParallel(vert1);
@@ -462,7 +476,7 @@ function ClipPerspective() {
     for (var i = 0; i < scene.models[0].edges.length; i++) {
         //index j is vert0
         for (var j = 0; j < scene.models[0].edges[i].length-1; j++) {
-            console.log("I: "+i+" J:" + j);
+            //console.log("I: "+i+" J:" + j);
             //index k is vert1
             var k = j + 1;
             //n is value for vert0 index
@@ -470,18 +484,23 @@ function ClipPerspective() {
             //m is value for vert0 index
             var m = scene.models[0].edges[i][k];
 
-            var vert0 = scene.models[0].vertices[n];
-            var vert1 = scene.models[0].vertices[m];
+            var vert0 = new Vector(scene.models[0].vertices[n]);
+            var vert1 = new Vector(scene.models[0].vertices[m]);
+            console.log("Vert0: ",vert0);
+            console.log("Vert1: ",vert1);
 
             var outcode0 = GetOutCodePerspective(vert0, zmin);
             var outcode1 = GetOutCodePerspective(vert1, zmin);
 
-            var delta_x = vert1.values[0] - vert0.values[0];
-            var delta_y = vert1.values[1] - vert0.values[1];
-			var delta_z=  vert1.values[2] - vert0.values[2];
+            var delta_x = vert1.x - vert0.x;
+            var delta_y = vert1.y - vert0.y;
+			var delta_z=  vert1.z - vert0.z;
             var done = false;
-			var stop = 0;
-           while (!done) {
+            var stop = 0;
+            
+            //outcode0 = 0;
+            //outcode1 = 0;
+            while (!done) {
 			   console.log("outcode0 " + outcode0 + " outcode1 " + outcode1);
                 if ((outcode0 | outcode1) === 0) { //trivial accept
                     done = true;
@@ -524,41 +543,47 @@ function ClipPerspective() {
                     }
                     console.log("selected_pt.values: "+selected_pt.values)
                     if ((selected_outcode & LEFT) === LEFT) {
-						var t = (-selected_pt.data[0][0] + selected_pt.data[2][0])/(delta_x-delta_z);
-                        selected_pt.data[0][0] = selected_pt.data[0][0] + (t*delta_x);
-                        selected_pt.data[1][0] = selected_pt.data[1][0] + (t*delta_y);
-						selected_pt.data[2][0] = selected_pt.data[2][0] + (t*delta_z);
+                        var t = (-vert0.x + vert0.z)/(delta_x-delta_z);
+                        console.log("LEFT t = "+t);
+                        selected_pt.x = vert0.x + (t*delta_x);
+                        selected_pt.y = vert0.y + (t*delta_y);
+						selected_pt.z = vert0.z + (t*delta_z);
 						
                     }
                     else if ((selected_outcode & RIGHT) === RIGHT) {
-                        var t = (selected_pt.data[0][0] + selected_pt.data[2][0])/(-delta_x-delta_z);
-                        selected_pt.data[0][0] = selected_pt.data[0][0] + (t*delta_x);
-                        selected_pt.data[1][0] = selected_pt.data[1][0] + (t*delta_y);
-						selected_pt.data[2][0] = selected_pt.data[2][0] + (t*delta_z);
+                        var t = (vert0.x + vert0.z)/(-delta_x-delta_z);
+                        console.log("RIGHT t = "+t);
+                        selected_pt.x = vert0.x + (t*delta_x);
+                        selected_pt.y = vert0.y + (t*delta_y);
+						selected_pt.z = vert0.z + (t*delta_z);
                     }
                     else if ((selected_outcode & BOTTOM) === BOTTOM) {
-                        var t = (-selected_pt.data[1][0] + selected_pt.data[2][0])/(delta_y-delta_z);
-                        selected_pt.data[0][0] = selected_pt.data[0][0] + (t*delta_x);
-                        selected_pt.data[1][0] = selected_pt.data[1][0] + (t*delta_y);
-						selected_pt.data[2][0] = selected_pt.data[2][0] + (t*delta_z);
+                        var t = (-vert0.y + vert0.z)/(delta_y-delta_z);
+                        console.log("BOTTOM t = "+t);
+                        selected_pt.x = vert0.x + (t*delta_x);
+                        selected_pt.y = vert0.y + (t*delta_y);
+						selected_pt.z = vert0.z + (t*delta_z);
                     }
                     else if ((selected_outcode & TOP) === TOP){
-						var t = (selected_pt.data[1][0] + selected_pt.data[2][0])/(-delta_y-delta_z);
-                        selected_pt.data[0][0] = selected_pt.data[0][0] + (t*delta_x);
-                        selected_pt.data[1][0] = selected_pt.data[1][0] + (t*delta_y);
-						selected_pt.data[2][0] = selected_pt.data[2][0] + (t*delta_z);;
+                        var t = (vert0.y + vert0.z)/(-delta_y-delta_z);
+                        console.log("TOP t = "+t);
+                        selected_pt.x = vert0.x + (t*delta_x);
+                        selected_pt.y = vert0.y + (t*delta_y);
+						selected_pt.z = vert0.z + (t*delta_z);
                     }
                     else if ((selected_outcode & INFRONT) === INFRONT){
-						var t = (selected_pt.data[2][0] -zmin )/(-delta_z);
-                        selected_pt.data[0][0] = selected_pt.data[0][0] + (t*delta_x);
-                        selected_pt.data[1][0] = selected_pt.data[1][0] + (t*delta_y);
-						selected_pt.data[2][0] = selected_pt.data[2][0] + (t*delta_z);
+                        var t = (vert0.z -zmin )/(-delta_z);
+                        console.log("NEAR t = "+t);
+                        selected_pt.x = vert0.x + (t*delta_x);
+                        selected_pt.y = vert0.y + (t*delta_y);
+						selected_pt.z = vert0.z + (t*delta_z);
                     }
                     else{
-						var t = (-selected_pt.data[2][0] -1 )/(delta_z);
-                        selected_pt.data[0][0] = selected_pt.data[0][0] + (t*delta_x);
-                        selected_pt.data[1][0] = selected_pt.data[1][0] + (t*delta_y);
-						selected_pt.data[2][0] = selected_pt.data[2][0] + (t*delta_z);                 
+                        var t = (-vert0.z -1 )/(delta_z);
+                        console.log("FAR t = "+t);
+                        selected_pt.x = vert0.x + (t*delta_x);
+                        selected_pt.y = vert0.y + (t*delta_y);
+						selected_pt.z = vert0.z + (t*delta_z);               
                     }
                     if (outcode0 > 0) {
                         vert0.data = selected_pt.data; 
@@ -580,6 +605,7 @@ function ClipPerspective() {
 function GetOutCodeParallel(vector) {
     var outcode = 0;
     //left right
+    console.log("XXXX: "+vector.values[0])
     if (vector.values[0] < -1) {
         outcode += 32;
     }
@@ -605,33 +631,33 @@ function GetOutCodeParallel(vector) {
 
 function GetOutCodePerspective(vector, zmin) {
     var outcode = 0;
-	console.log("x is " + vector.values[0][0] + " y is " + vector.values[1][0] + " z is " + vector.values[2][0]);
+	//console.log("x is " + vector.values[0][0] + " y is " + vector.values[1][0] + " z is " + vector.values[2][0]);
     //left right
-    if (vector.values[0][0] < (vector.values[2][0])) {
+    if (vector.x < vector.z) {
         outcode += 32;
-		console.log("left of left");
+		//console.log("left of left");
     }
-    else if (vector.values[0][0] > (-1)*vector.values[2][0]) {
+    else if (vector.x > -vector.z) {
         outcode += 16
-		console.log("right of right");
+		//console.log("right of right");
     }
     //top bottom
-    if (vector.values[1][0] < vector.values[2][0]) {
+    if (vector.y < vector.z) {
         outcode += 8
-		console.log("bottom of bottom");
+		//console.log("bottom of bottom");
     }
-    else if (vector.values[1][0] > (-1)*vector.values[2][0]) {
+    else if (vector.y > -vector.z) {
         outcode += 4
-		console.log("top of top");
+		//console.log("top of top");
     }
     //near far
-    if (vector.values[2][0] > zmin) {
+    if (vector.z > zmin) {
         outcode += 2
-		console.log("near of near");
+		//console.log("near of near");
     }
-    else if (vector.values[2][0] < -1) {
+    else if (vector.z < -1) {
         outcode += 1
-		console.log("back of back");
+		//console.log("back of back");
     }
     return outcode;
 }
