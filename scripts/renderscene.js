@@ -26,22 +26,22 @@ function Init() {
 
         view: {
 
-            type: 'perspective',
+            type: 'parallel',
 			
-			/*
+			
             vrp: Vector3(20, 0, -30),
             vpn: Vector3(1, 0, 1),
             vup: Vector3(0, 1, 0),
             prp: Vector3(14, 20, 26),
             clip: [-20, 20, -4, 36, 1, -50]
-			*/
 			
+			/*
 			vrp: Vector3(0, 0, -54),
             vpn: Vector3(0, 0, 1),
             vup: Vector3(0, 1, 0),
             prp: Vector3(8, 8, 30),
             clip: [-1, 17, -1, 17, 2, -23]
-			
+			*/
 			
 			
 
@@ -83,25 +83,27 @@ function DrawScene() {
 
 	if(scene.view.type === "perspective"){
 		var transMatrix = mat4x4perspective(scene.view.vrp, scene.view.vpn, scene.view.vup, scene.view.prp, scene.view.clip);
-		console.log("This is NPer" + transMatrix.values);
+		//console.log("This is NPer" + transMatrix.values);
 		var ogData = scene.models[0].vertices;
 		//will need to loop though all models later on.
 		for (var i = 0; i < scene.models[0].vertices.length; i++) {
 			//will give in terms of tiny window 
 			scene.models[0].vertices[i] = transMatrix.mult(scene.models[0].vertices[i])
-			console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
+			//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
 		}
 		ClipPerspective();
 	}
 	else if(scene.view.type === "parallel"){
+		console.log("Back to parallel");
+		console.log("Check prp", scene.view.prp);
 		var transMatrix = mat4x4parallel(scene.view.vrp, scene.view.vpn, scene.view.vup, scene.view.prp, scene.view.clip);
-		console.log("This is NPer" + transMatrix.values);
+		//console.log("This is NPer" + transMatrix.values);
 		var ogData = scene.models[0].vertices;
 		//will need to loop though all models later on.
 		for (var i = 0; i < scene.models[0].vertices.length; i++) {
 			//will give in terms of tiny window 
 			scene.models[0].vertices[i] = transMatrix.mult(scene.models[0].vertices[i])
-			console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
+			//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
 		}
 		ClipParallel();
 	}
@@ -139,7 +141,7 @@ function DrawScene() {
     prev_time = start_time;
     window.requestAnimationFrame(Animate);
     */
-    console.log(scene);
+    //console.log(scene);
 }
 
 // Called when user selects a new scene JSON file
@@ -183,6 +185,11 @@ function OnKeyDown(event) {
     switch (event.keyCode) {
         case 37: // LEFT Arrow
             console.log("left");
+			view = document.getElementById('view');
+			ctx.clearRect(0, 0, view.width, view.height);
+			ctx = view.getContext('2d');
+			scene.view.prp.x += -1;
+			DrawScene();
             break;
         case 38: // UP Arrow
             console.log("up");
@@ -242,19 +249,22 @@ function ClipParallel() {
 
             var delta_x = vert1.values[0] - vert0.values[0];
             var delta_y = vert1.values[1] - vert0.values[1];
-            var b = vert0.values[1] - ((delta_y / delta_x) * vert0.values[0]);
+			var delta_z = vert1.values[2] - vert0.values[2];
             var done = false;
            while (!done) {
                 if ((outcode0 | outcode1) === 0) { //trivial accept
+					console.log("Trival accept");
                     done = true;
+					
                     fbMatrix = new Matrix(4, 4);
                     fbMatrix.values = [[view.width / 2, 0, 0, view.width / 2],
                                        [0, view.height / 2, 0, view.height / 2],
                                        [0, 0, 1, 0],
                                        [0, 0, 0, 1]];
-                    vert0 = fbMatrix.mult(vert0);
-                    vert1 = fbMatrix.mult(vert1);
-                    DrawLine(vert0.values[0], vert0.values[1], vert1.values[0], vert1.values[1]);
+                    vert0 = new Vector(fbMatrix.mult(vert0));
+                    vert1 = new Vector(fbMatrix.mult(vert1));
+					
+                    DrawLine(vert0.x/vert0.w, vert0.y/vert0.w, vert1.x/vert1.w, vert1.y/vert1.w);
                 }
                 else if ((outcode0 & outcode1) !== 0) {
                     console.log("trivial reject")
@@ -265,35 +275,53 @@ function ClipParallel() {
                     var selected_pt;
                     var selected_outcode;
                     if (outcode0 > 0) {
-                        selected_pt = vert0;
+                        selected_pt = new Vector(vert0);
                         selected_outcode = outcode0;
                     }
                     else {
-                        selected_pt = vert1;
+                        selected_pt =  new Vector(vert1);
                         selected_outcode = outcode1;
                     }
-                    console.log("selected_pt.values: "+selected_pt.values)
+                    console.log("before changing selected_pt.values: "+selected_pt.values)
                     if ((selected_outcode & LEFT) === LEFT) {
-                        selected_pt.data[0][0] = -1;
-                        selected_pt.data[1][0] = (delta_y / delta_x) * selected_pt.data[0] + b;
+                        var t = (-1-selected_pt.x)/delta_x;
+                        selected_pt.x = selected_pt.x + (t*delta_x);
+                        selected_pt.y = selected_pt.y + (t*delta_y);
+						selected_pt.z = selected_pt.z + (t*delta_z);
                     }
                     else if ((selected_outcode & RIGHT) === RIGHT) {
-                        selected_pt.data[0][0] = 1;
-                        selected_pt.data[1][0] = (delta_y / delta_x) * selected_pt.data[0] + b;
+                        var t = (1-selected_pt.x)/delta_x;
+						console.log("t is:" + t + " Delta y" + delta_y + " delta x: " + delta_x);
+						console.log("Before change selected point y is:" + selected_pt.y);
+                        selected_pt.x = selected_pt.x + (t*delta_x);
+                        selected_pt.y = selected_pt.y + (t*delta_y);
+						selected_pt.z = selected_pt.z + (t*delta_z);
+						console.log("After change selected point y is:" + selected_pt.y);
+						console.log("after changing right selected_pt.values: "+selected_pt.values)
                     }
                     else if ((selected_outcode & BOTTOM) === BOTTOM) {
-                        selected_pt.data[0][0] = (selected_pt.data[1] - b) * (delta_x / delta_y);
-                        selected_pt.data[1][0] = -1;
+                        var t = (-1-selected_pt.y)/delta_y;
+                        selected_pt.x = selected_pt.x + (t*delta_x);
+                        selected_pt.y = selected_pt.y + (t*delta_y);
+						selected_pt.z = selected_pt.z + (t*delta_z);
                     }
                     else if ((selected_outcode & TOP) === TOP){
-                        selected_pt.data[0][0] = (selected_pt.data[1] - b) * (delta_x / delta_y);
-                        selected_pt.data[1][0] = 1;
+                        var t = (1-selected_pt.y)/delta_y;
+                        selected_pt.x = selected_pt.x + (t*delta_x);
+                        selected_pt.y = selected_pt.y + (t*delta_y);
+						selected_pt.z = selected_pt.z + (t*delta_z);
                     }
                     else if ((selected_outcode & INFRONT) === INFRONT){
-                        selected_pt.data[2][0] = 0;
+                        var t = (-selected_pt.z)/delta_z;
+                        selected_pt.x = selected_pt.x + (t*delta_x);
+                        selected_pt.y = selected_pt.y + (t*delta_y);
+						selected_pt.z = selected_pt.z + (t*delta_z);
                     }
                     else{
-                        selected_pt.data[2][0] = -1;                  
+                        var t = (-1-selected_pt.z)/delta_z;
+                        selected_pt.x = selected_pt.x + (t*delta_x);
+                        selected_pt.y = selected_pt.y + (t*delta_y);
+						selected_pt.z = selected_pt.z + (t*delta_z);                
                     }
                     if (outcode0 > 0) {
                         vert0.data = selected_pt.data; 
