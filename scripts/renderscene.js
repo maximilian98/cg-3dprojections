@@ -34,8 +34,8 @@ function Init() {
             vup: Vector3(0, 1, 0),
             prp: Vector3(14, 20, 26),
             clip: [-20, 20, -4, 36, 1, -50]
-			
 			/*
+			
 			vrp: Vector3(0, 0, -54),
             vpn: Vector3(0, 0, 1),
             vup: Vector3(0, 1, 0),
@@ -105,7 +105,38 @@ function DrawScene() {
 			scene.models[0].vertices[i] = transMatrix.mult(scene.models[0].vertices[i])
 			//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
 		}
-		ClipParallel();
+		
+//added just to draw the correct lines		
+	for (var i = 0; i < scene.models[0].edges.length; i++) {
+        //index j is vert0
+        for (var j = 0; j < scene.models[0].edges[i].length-1; j++) {
+            console.log("I: "+i+" J:" + j);
+            //index k is vert1
+            var k = j + 1;
+            //n is value for vert0 index
+            var n = scene.models[0].edges[i][j];
+            //m is value for vert0 index
+            var m = scene.models[0].edges[i][k];
+
+            var vert0 = scene.models[0].vertices[n];
+            var vert1 = scene.models[0].vertices[m];
+			
+		            fbMatrix = new Matrix(4, 4);
+                    fbMatrix.values = [[view.width / 2, 0, 0, view.width / 2],
+                                       [0, view.height / 2, 0, view.height / 2],
+                                       [0, 0, 1, 0],
+                                       [0, 0, 0, 1]];
+                    vert0 = new Vector(fbMatrix.mult(vert0));
+                    vert1 = new Vector(fbMatrix.mult(vert1));
+					
+                    DrawLine(vert0.x/vert0.w, vert0.y/vert0.w, vert1.x/vert1.w, vert1.y/vert1.w);			
+			
+		}
+	}
+		
+
+		
+		//ClipParallel();
 	}
 	else{}
 	
@@ -179,26 +210,106 @@ function LoadNewScene() {
     };
     reader.readAsText(scene_file.files[0], "UTF-8");
 }
-
+var horizontalMovement = 0;
+var depth = 0;
 // Called when user presses a key on the keyboard down 
 function OnKeyDown(event) {
-    switch (event.keyCode) {
-        case 37: // LEFT Arrow
-            console.log("left");
-			view = document.getElementById('view');
+				view = document.getElementById('view');
 			ctx.clearRect(0, 0, view.width, view.height);
 			ctx = view.getContext('2d');
-			scene.view.prp.x += -1;
+			    scene = {
+
+        view: {
+            type: 'parallel',
+			
+            vrp: Vector3(20, 0, -30),
+            vpn: Vector3(1, 0, 1),
+            vup: Vector3(0, 1, 0),
+            prp: Vector3(14, 20, 26),
+            clip: [-20, 20, -4, 36, 1, -50]
+			
+			/*
+			vrp: Vector3(0, 0, -54),
+            vpn: Vector3(0, 0, 1),
+            vup: Vector3(0, 1, 0),
+            prp: Vector3(8, 8, 30),
+            clip: [-1, 17, -1, 17, 2, -23]
+			*/
+        },
+        models: [
+            {
+                type: 'generic',
+                vertices: [
+                    Vector4(0, 0, -30, 1),
+                    Vector4(20, 0, -30, 1),
+                    Vector4(20, 12, -30, 1),
+                    Vector4(10, 20, -30, 1),
+                    Vector4(0, 12, -30, 1),
+                    Vector4(0, 0, -60, 1),
+                    Vector4(20, 0, -60, 1),
+                    Vector4(20, 12, -60, 1),
+                    Vector4(10, 20, -60, 1),
+                    Vector4(0, 12, -60, 1)
+                ],
+                edges: [
+                    [0, 1, 2, 3, 4, 0],
+                    [5, 6, 7, 8, 9, 5],
+                    [0, 5],
+                    [1, 6],
+                    [2, 7],
+                    [3, 8],
+                    [4, 9]
+                ]
+            }
+        ]
+		};
+	var n = scene.view.vpn;
+    n.normalize();
+    var u = scene.view.vup.cross(n);
+    var v = n.cross(u);
+    switch (event.keyCode) {
+		
+        case 37: // LEFT Arrow
+            console.log("left");
+			horizontalMovement --;
+			u.scale(horizontalMovement);
+			scene.view.vrp = scene.view.vrp.add(u)
 			DrawScene();
             break;
         case 38: // UP Arrow
             console.log("up");
-            break;
+			depth ++;
+			console.log("depth:" + depth)
+			console.log("n before: ", n);
+			//something wrong with this scaling
+			n.scale(depth);
+			console.log("n after: ", n);
+			console.log("vrp before ", scene.view.vrp);
+			scene.view.vrp = scene.view.vrp.add(n)
+			console.log("vrp after ", scene.view.vrp);
+
+			DrawScene();
+            break;	
         case 39: // RIGHT Arrow
             console.log("right");
+			horizontalMovement ++;
+			//u.scale(2);
+			//result = mat4x4translate(u.x, u.y, u.z);
+			//holder = new Vector(result);
+			
+			//scene.view.vrp = holder.mult(scene.view.vrp);
+			
+			u.scale(horizontalMovement);
+			scene.view.vrp = scene.view.vrp.add(u)
+
+			DrawScene();
             break;
         case 40: // DOWN Arrow
             console.log("down");
+			depth --;
+			n.scale(depth);
+			scene.view.vrp = scene.view.vrp.add(n)
+			DrawScene();
             break;
     }
 }
