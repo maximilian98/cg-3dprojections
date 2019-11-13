@@ -637,6 +637,51 @@ function GetOutCodePerspective(vector, zmin) {
 }
 
 /*
+    on load scene, will have to set global scene var = to the contents of the file
+    to access and set variables like scene.view or scene.models
+    //unsure if we will have to pass scene to this to access the variables
+    private void createCube() {
+        //var index = index of cube when we loop through and find the cube
+        //creating front bottom verticies -- starting with front bottom left
+        var x = scene.models[index].center.x - (scene.models[index].width/2);
+        var z = scene.models[index].center.z + (scene.models[index].width/2);
+        var y = scene.models[index].center.y - (scene.models[index].height/2);
+        var v0 = new Vector4(x,y,z,1);
+        x = x + scene.models[index].width;
+        var v1 = new Vector4(x,y,z,1);
+        //creating front top verticies
+        y = y + scene.models[index].height;
+        var v2 = new Vector4(x,y,z,1);
+        x = x - scene.models[index].width;
+        var v3 = new Vector4(x,y,z,1);
+        //back verticies -- starting with back bottom left
+        y = y-scene.models[index].height;
+        z = z - scene.models[index].width;
+        var v4 = new Vector4(x,y,z,1);
+        x = x + scene.models[index].width;
+        var v5 = new Vector4(x,y,z,1);
+        y = y + scene.models[index].height;
+        var v6 = new Vector4(x,y,z,1);
+        x = x - scene.models[index].width;
+        var v7 = new Vector4(x, y,z,1);
+        scene.models[index] = {
+            type: 'cube',
+                vertices: [
+                    v0,v1,v2,v3,v4,v5,v6,v7
+                ],
+                edges: [
+                    [0, 1, 2, 3, 0],
+                    [4, 5, 6, 7, 4],
+                    [0, 4],
+                    [1, 5],
+                    [2, 6],
+                    [3, 7]
+                ]
+        }
+    }
+ */
+
+/*
 
 function ClipLine(pt0, pt1, view) {
 
