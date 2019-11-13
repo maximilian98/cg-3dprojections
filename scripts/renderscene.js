@@ -26,7 +26,8 @@ function Init() {
 
         view: {
 
-            type: 'parallel',
+            type: 'perspective',
+			
 			/*
             vrp: Vector3(20, 0, -30),
             vpn: Vector3(1, 0, 1),
@@ -40,6 +41,8 @@ function Init() {
             vup: Vector3(0, 1, 0),
             prp: Vector3(8, 8, 30),
             clip: [-1, 17, -1, 17, 2, -23]
+			
+			
 			
 
         },
@@ -345,7 +348,7 @@ function ClipPerspective() {
                     done = true;
 					
 					//Mper
-					/*
+					
 					mPer = new Matrix(4, 4);
                     mPer.values = [[1, 0, 0, 0],
                                    [0, 1, 0, 0],
@@ -353,15 +356,16 @@ function ClipPerspective() {
                                    [0, 0, -1, 0]];
 					vert0 = mPer.mult(vert0);
                     vert1 = mPer.mult(vert1);
-					*/
+					
+					
                     fbMatrix = new Matrix(4, 4);
                     fbMatrix.values = [[view.width / 2, 0, 0, view.width / 2],
                                        [0, view.height / 2, 0, view.height / 2],
                                        [0, 0, 1, 0],
                                        [0, 0, 0, 1]];
-                    vert0 = fbMatrix.mult(vert0);
-                    vert1 = fbMatrix.mult(vert1);
-                    DrawLine(vert0.values[0], vert0.values[1], vert1.values[0], vert1.values[1]);
+                    vert0 = new Vector(fbMatrix.mult(vert0));
+                    vert1 = new Vector(fbMatrix.mult(vert1));
+                    DrawLine(vert0.x/vert0.w, vert0.y/vert0.w, vert1.x/vert1.w, vert1.y/vert1.w);
                 }
                 else if ((outcode0 & outcode1) !== 0) {
                     console.log("trivial reject")
