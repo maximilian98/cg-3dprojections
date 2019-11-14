@@ -222,20 +222,20 @@ function OnKeyDown(event) {
 
         view: {
             type: 'perspective',
-			
+			/*
             vrp: Vector3(20, 0, -30),
             vpn: Vector3(1, 0, 1),
             vup: Vector3(0, 1, 0),
             prp: Vector3(14, 20, 26),
             clip: [-20, 20, -4, 36, 1, -50]
 			
-			/*
+			*/
 			vrp: Vector3(0, 0, -54),
             vpn: Vector3(0, 0, 1),
             vup: Vector3(0, 1, 0),
             prp: Vector3(8, 8, 30),
             clip: [-1, 17, -1, 17, 2, -23]
-			*/
+			
         },
         models: [
             {
@@ -351,7 +351,6 @@ function DrawLine(x1, y1, x2, y2) {
 	
 function ClipParallel() {
 
-    result = [];
 
     //i is the index in edges
     //loop through each set of edges
@@ -456,18 +455,13 @@ function ClipParallel() {
                         vert1.data = selected_pt.data;
                         outcode1 = GetOutCodeParallel(selected_pt);
                     }
-
                 }
-
-            }
-
+            }//end while loop
         }
     }
-
 }
 function ClipPerspective() {
 	
-	result = [];
 	var zmin = (-1) * (((-1)*scene.view.prp.z) + scene.view.clip[4])/ ((-1)*(scene.view.prp.z) + scene.view.clip[5]);
 	console.log("zmin is" + zmin);
 
@@ -496,7 +490,6 @@ function ClipPerspective() {
             var delta_y = vert1.y - vert0.y;
 			var delta_z=  vert1.z - vert0.z;
             var done = false;
-            var stop = 0;
             
             //outcode0 = 0;
             //outcode1 = 0;
@@ -595,9 +588,7 @@ function ClipPerspective() {
                     }
 
                 }
-				stop++;
-            }
-
+            }//end while loop
         }
     }
 }
@@ -606,24 +597,24 @@ function GetOutCodeParallel(vector) {
     var outcode = 0;
     //left right
     console.log("XXXX: "+vector.values[0])
-    if (vector.values[0] < -1) {
+    if (vector.x < -1) {
         outcode += 32;
     }
-    else if (vector.values[0] > 1) {
+    else if (vector.x > 1) {
         outcode += 16
     }
     //top bottom
-    if (vector.values[1] < -1) {
+    if (vector.y < -1) {
         outcode += 8
     }
-    else if (vector.values[1] > 1) {
+    else if (vector.y > 1) {
         outcode += 4
     }
     //near far
-    if (vector.values[2] > 0) {
+    if (vector.z > 0) {
         outcode += 2
     }
-    else if (vector.values[2] < -1) {
+    else if (vector.z < -1) {
         outcode += 1
     }
     return outcode;
