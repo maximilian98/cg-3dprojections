@@ -156,11 +156,9 @@ function LoadNewScene() {
                 var x = scene.models[i].center[0] - (scene.models[i].width/2);
                 var z = scene.models[i].center[2] + (scene.models[i].width/2);
                 var y = scene.models[i].center[1] - (scene.models[i].height/2);
-                console.log("trying " + x,y,z);
                 var v0 = new Vector4(x,y,z,1);
                 x = x + scene.models[i].width;
                 var v1 = new Vector4(x,y,z,1);
-                console.log("v0 " ,v0);
                 //creating front top verticies
                 y = y + scene.models[i].height;
                 var v2 = new Vector4(x,y,z,1);
@@ -235,7 +233,93 @@ function LoadNewScene() {
                 }     
                 scene.models[i].vertices = bottomCircle.vertices;
 				scene.models[i].edges = edges;
-			}
+            }
+            /*
+function CreateCirclePoints(y, sides, r, incrementAngle, a,b) {
+    var createdVertices = [];
+    createdVertices.length = sides;
+   var t=0;
+    var vx;
+    var vz;
+    for (var i=0; i<sides; i++){
+
+        vx = a + r*Math.cos(t);
+        vz = b + r*Math.sin(t);
+        var tempVert = new Vector4(vx,y,vz,1)
+        createdVertices[i] = tempVert;
+
+        t = t + incrementAngle;
+    }
+    var edges = [];
+
+    for (var i=0; i<createdVertices.length; i++) {
+        edges[i] = i;
+    }
+    edges[edges.length]= 0;
+        
+    var returnObject = {"vertices": createdVertices,"edges": edges};
+
+    return returnObject;
+}
+*/
+            else if(scene.models[i].type === 'sphere'){
+                var height = scene.models[i].height;
+                var slices = scene.models[i].slices;
+                var stacks = scene.models[i].stacks
+                var r = scene.models[i].radius;
+                var rotationAngle = (2 * Math.PI)/slices; //angle of rotation for the slice vertices
+                var incrementAngle = (Math.PI)/(stacks+2);
+                var createdVertices = [];
+                var edges = [];
+
+                var a = scene.models[i].center[0];
+                var b = scene.models[i].center[1];
+                var z = scene.models[i].center[2];
+
+                var t=0;
+                var vx;
+                var vy;
+                var quickedges = [];
+                var tempVerts = [];
+                for (var w = 0; w<stacks+2; w++){
+                    vy = a + r*Math.cos(t);
+                    vx = b + r*Math.sin(t);
+                    var tempVert = new Vector4(vx,vy,z,1)
+                    createdVertices[w] = tempVert;
+                    tempVerts[w] = tempVert;
+                    t = t + incrementAngle;
+                    quickedges[w] = w;
+                }              
+                edges[0] = quickedges;
+
+                // for(var v = 1; v<slices;v++){
+                //     console.log("This is number slice: "+ v)
+                //     var vStartingIndex = v*(stacks+2);
+                //     console.log("Tempvert",tempVert)
+                //     var e = [];
+                //     rotationAngle = rotationAngle*v;
+                //     for(var t = 0; t<tempVerts.length;t++){
+                //         console.log("TempVert",tempVert);
+                //         createdVertices[vStartingIndex+t] = Matrix.multiply(mat4x4rotatey(rotationAngle),tempVerts[t]);
+                //         e[t] = vStartingIndex+t;
+                //     }
+                //     edges[v] = e;
+                //     //edge index should just equal v
+                // }
+                //console.log("created Verticies: ", createdVertices[0], createdVertices[1],createdVertices[2], createdVertices[3],createdVertices[4], createdVertices[5],)
+            
+                // for (var w =0; i<createdVertices.length; w++) {
+                //     edges[w] = w;
+                // }
+                // console.log("scene.models[i].vertices", createdVertices);
+                // console.log("scene.models[i].edges",edges);
+
+
+                scene.models[i].vertices = createdVertices;
+				scene.models[i].edges = edges;
+
+
+            }
             else {
                 scene.models[i].center = Vector4(scene.models[i].center[0],
                     scene.models[i].center[1],
@@ -291,9 +375,7 @@ function Animate(timestamp) {
 			var transformMat;
 			if(scene.models[j].animation != undefined)
 			{
-				var theta = ((2*Math.PI))*scene.models[j].animation.rps*(time/1000);
-				console.log("Theta is: " + theta + " rps: " + scene.models[j].animation.rps + " time: " + time);
-				
+				var theta = ((2*Math.PI))*scene.models[j].animation.rps*(time/1000);				
 				var center = scene.models[j].center;
 				result1 = mat4x4translate(-center[0], -center[1], -center[2]);
 				if(scene.models[j].animation.axis == "x"){
@@ -342,7 +424,6 @@ function ClipParallel(index) {
     for (var i = 0; i < scene.models[index].edges.length; i++) {
         //index j is vert0
         for (var j = 0; j < scene.models[index].edges[i].length-1; j++) {
-            console.log("I: "+i+" J:" + j);
             //index k is vert1
             var k = j + 1;
             //n is value for vert0 index
@@ -362,7 +443,6 @@ function ClipParallel(index) {
             var done = false;
            while (!done) {
                 if ((outcode0 | outcode1) === 0) { //trivial accept
-					console.log("Trival accept");
                     done = true;
 					
                     fbMatrix = new Matrix(4, 4);
@@ -376,7 +456,6 @@ function ClipParallel(index) {
                     DrawLine(vert0.x/vert0.w, vert0.y/vert0.w, vert1.x/vert1.w, vert1.y/vert1.w);
                 }
                 else if ((outcode0 & outcode1) !== 0) {
-                    console.log("trivial reject")
                     done = true;
                 }
                 else {
