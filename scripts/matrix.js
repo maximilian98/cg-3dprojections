@@ -348,14 +348,6 @@ function mat4x4parallel(vrp, vpn, vup, prp, clip) {
 	result = result.mult(step2result);
 	result = result.mult(step1result);
 	
-	
-
-    // 2. rotate VRC such that n-axis (VPN) becomes the z-axis, 
-    //    u-axis becomes the x-axis, and v-axis becomes the y-axis
-    // 3. shear such that the DOP becomes parallel to the z-axis
-    // 4. translate and scale into canonical view volume
-    //    (x = [-1,1], y = [-1,1], z = [0,-1])
-
     return result;
 }
 
@@ -383,9 +375,6 @@ function mat4x4perspective(vrp, vpn, vup, prp, clip) {
 	
 	var step3result = mat4x4translate((-1)*prp.x, (-1)*prp.y, (-1)*prp.z);
 	
-	/*var shx = ((-1)*prp.x)/prp.z;
-	var shy = ((-1)*prp.y)/prp.z;
-	var step4result= mat4x4shearxy(shx, shy);*/
 	var CW= new Vector3((clip[0]+ clip[1])/2, (clip[2]+ clip[3])/2, 0 );
 	
 	var DOP = CW.subtract(prp);
@@ -402,14 +391,7 @@ function mat4x4perspective(vrp, vpn, vup, prp, clip) {
 	result = result.mult(step3result);
 	result = result.mult(step2result);
 	result = result.mult(step1result);
-	
-    // 1. translate VRP to the origin
-    // 2. rotate VRC such that n-axis (VPN) becomes the z-axis, 
-    //    u-axis becomes the x-axis, and v-axis becomes the y-axis
-    // 3. translate PRP to the origin
-    // 4. shear such that the center line of the view volume becomes the z-axis
-    // 5. scale into canonical view volume (truncated pyramid)
-    //    (x = [z,-z], y = [z,-z], z = [-z_min,-1])
+
     return result;
 }
 

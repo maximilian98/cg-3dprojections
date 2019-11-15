@@ -28,8 +28,6 @@ function Init() {
         y = center.y - height/z
         z = center.z + radius*sin(theta)
         */
-
-
         view: {
 
             type: 'perspective',
@@ -48,9 +46,6 @@ function Init() {
             prp: Vector3(8, 8, 30),
             clip: [-1, 17, -1, 17, 2, -23]
 		*/
-			
-			
-
         },
         models: [
             {
@@ -103,18 +98,17 @@ function Init() {
     };
     // event handler for pressing arrow keys
     document.addEventListener('keydown', OnKeyDown, false);
-	
-	
 	/*//CLEAR OLD 
     view = document.getElementById('view');
     ctx.clearRect(0, 0, view.width, view.height);
 
     //ANIMATION
-	starttime = performance.now(); // current timestamp in milliseconds
-    prevtime = starttime;
-    //window.requestAnimationFrame(Animate);
+	
 
     //console.log(scene);*/
+	starttime = performance.now(); // current timestamp in milliseconds
+    prevtime = starttime;
+	//window.requestAnimationFrame(Animate);
 	
     DrawScene();
 }
@@ -135,18 +129,16 @@ function DrawScene() {
 				//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
 			}
 			ClipPerspective(j);
-			if(scene.models[j].animation != null)
+			if(scene.models[j].animation != undefined)
 			{
 				starttime = performance.now(); // current timestamp in milliseconds
 				revtime = starttime;
-				window.requestAnimationFrame(Animate);
+				//window.requestAnimationFrame(Animate);
 				animeIndex = j;
 				rps = scene.models[j].animation.rps;
 			}
 			else{}
 		}
-
-		
 	}
 	else if(scene.view.type === "parallel"){
 		console.log("Back to parallel");
@@ -163,7 +155,6 @@ function DrawScene() {
 				//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
 			}
 			ClipParallel(j);
-			console.log("Check for animation", scene.models[j].animation + " for model: " + scene.models[j].type);
 			if(scene.models[j].animation !== undefined)
 			{
 				console.log("Inside the animation");
@@ -310,14 +301,12 @@ function LoadNewScene() {
                     scene.models[i].center[2],
                     1);
             }
-        }
-		
+        }	
         DrawScene();
     };
     reader.readAsText(scene_file.files[0], "UTF-8");
 }
-var horizontalMovement = 0;
-var depth = 0;
+
 // Called when user presses a key on the keyboard down 
 function OnKeyDown(event) {
 				view = document.getElementById('view');
@@ -339,7 +328,6 @@ function OnKeyDown(event) {
 			DrawScene();
             break;	
         case 39: // RIGHT Arrow
-			horizontalMovement ++;
 			scene.view.vrp = scene.view.vrp.add(u)
 			DrawScene();
             break;
@@ -347,12 +335,17 @@ function OnKeyDown(event) {
             scene.view.vrp = scene.view.vrp.add(n)
 			DrawScene();
             break;
+		case 78: //n
+			scene.view.prp= scene.view.prp.subtract(u)
+			DrawScene();
+			break;
+		case 77:
+			scene.view.prp = scene.view.prp.add(u)
+			DrawScene();
+			break;
     }
 }
-
-
-
-    function Animate(timestamp) {
+function Animate(timestamp) {
         // step 1: calculate time (time since start) 
         //        and/or delta time (time between successive frames)
         // step 2: transform models based on time or delta time
@@ -361,20 +354,14 @@ function OnKeyDown(event) {
 		view = document.getElementById('view');
 		ctx.clearRect(0, 0, view.width, view.height);
 
-
         var time = timestamp - starttime;
         var dt = timestamp - prevtime;
         prevtime = timestamp;
-
-
 			
         // ... step 2
-		console.log("These are the times, timestamp: " + timestamp + " starttime: " + starttime + " prevtime: " + prevtime + " time: " + time + " dt: " + dt); 
-		
-		
-		
-		var theta = (1/(2*Math.PI))*rps*(time*2000);
-		console.log("Theta is: " + theta);
+		console.log("These are the times, timestamp: " + timestamp + " starttime: " + starttime + " prevtime: " + prevtime + " time: " + time + " dt: " + dt); 	
+		var theta = (1/(2*Math.PI))*scene.models[animeIndex].animation.rps*(time*2000);
+		console.log("Theta is: " + theta + " rps: " + scene.models[animeIndex].animation.rps + " time: " + time);
 		if(dt > 1000){
 			var center = scene.models[animeIndex].center;
 			result1 = mat4x4translate(-center[0], -center[1], -center[2]);
@@ -396,10 +383,7 @@ function OnKeyDown(event) {
 		}
 
         //window.requestAnimationFrame(Animate);
-    }
-
-
-	
+}
 	
 // Draw black 2D line with red endpoints 
 function DrawLine(x1, y1, x2, y2) {
@@ -413,15 +397,13 @@ function DrawLine(x1, y1, x2, y2) {
     ctx.fillRect(x1 - 2, y1 - 2, 4, 4);
     ctx.fillRect(x2 - 2, y2 - 2, 4, 4);
 }
-
 	var LEFT = 32;
     var RIGHT = 16;
     var BOTTOM = 8;
     var TOP = 4;
     var INFRONT = 2;
     var BEHIND = 1;
-	
-	
+		
 function ClipParallel(index) {
 
 
@@ -666,7 +648,6 @@ function ClipPerspective(index) {
         }
     }
 }
-
 function GetOutCodeParallel(vector) {
     var outcode = 0;
     //left right
