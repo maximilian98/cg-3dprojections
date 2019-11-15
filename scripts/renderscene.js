@@ -227,57 +227,20 @@ function OnKeyDown(event) {
     switch (event.keyCode) {
 		
         case 37: // LEFT Arrow
-            console.log("left");
-			horizontalMovement --;
-            u.scale(horizontalMovement);
-            n.scale(depth);
-            scene.view.vrp = scene.view.vrp.add(u)
-            scene.view.vrp = scene.view.vrp.add(n)
+            scene.view.vrp = scene.view.vrp.subtract(u)
 			DrawScene();
             break;
         case 38: // UP Arrow
-            console.log("up");
-			depth --;
-			console.log("depth:" + depth)
-			console.log("n before: ", n);
-			//something wrong with this scaling
-            n.scale(depth);
-            u.scale(horizontalMovement);
-
-			console.log("n after: ", n);
-			console.log("vrp before ", scene.view.vrp);
-            scene.view.vrp = scene.view.vrp.add(n)
-            scene.view.vrp = scene.view.vrp.add(u)
-
-			console.log("vrp after ", scene.view.vrp);
-
+            scene.view.vrp = scene.view.vrp.subtract(n)
 			DrawScene();
             break;	
         case 39: // RIGHT Arrow
-            console.log("right");
 			horizontalMovement ++;
-			//u.scale(2);
-			//result = mat4x4translate(u.x, u.y, u.z);
-			//holder = new Vector(result);
-			
-			//scene.view.vrp = holder.mult(scene.view.vrp);
-            n.scale(depth);
-
-            u.scale(horizontalMovement);
-            scene.view.vrp = scene.view.vrp.add(n)
 			scene.view.vrp = scene.view.vrp.add(u)
-
 			DrawScene();
             break;
         case 40: // DOWN Arrow
-            console.log("down");
-			depth ++;
-            n.scale(depth);
-            u.scale(horizontalMovement);
-
             scene.view.vrp = scene.view.vrp.add(n)
-            scene.view.vrp = scene.view.vrp.add(u)
-
 			DrawScene();
             break;
     }
