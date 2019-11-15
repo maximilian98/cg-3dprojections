@@ -95,7 +95,6 @@ function Init() {
     prevtime = starttime;
 	window.requestAnimationFrame(Animate);
 	
-    //DrawScene();
 }
 
 function DrawScene() {
@@ -244,7 +243,6 @@ function LoadNewScene() {
                     1);
             }
         }	
-        DrawScene();
     };
     reader.readAsText(scene_file.files[0], "UTF-8");
 }
@@ -263,27 +261,22 @@ function OnKeyDown(event) {
 		
         case 37: // LEFT Arrow
             scene.view.vrp = scene.view.vrp.subtract(u)
-			DrawScene();
             break;
         case 38: // UP Arrow
             scene.view.vrp = scene.view.vrp.subtract(n)
-			DrawScene();
             break;	
         case 39: // RIGHT Arrow
 			scene.view.vrp = scene.view.vrp.add(u)
-			DrawScene();
             break;
         case 40: // DOWN Arrow
             scene.view.vrp = scene.view.vrp.add(n)
-			DrawScene();
             break;
 		case 78: //n
 			scene.view.prp= scene.view.prp.subtract(u)
-			DrawScene();
+
 			break;
 		case 77:
 			scene.view.prp = scene.view.prp.add(u)
-			DrawScene();
 			break;
     }
 }
