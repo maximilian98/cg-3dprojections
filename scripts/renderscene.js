@@ -2,8 +2,11 @@ var view;
 var ctx;
 var scene;
 var tempvertices = [];
-var start_time;
-var prev_time;
+var starttime;
+var prevtime;
+var animeIndex;
+var rps;
+
 
 // Initialization function - called when web page loads
 function Init() {
@@ -132,6 +135,15 @@ function DrawScene() {
 				//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
 			}
 			ClipPerspective(j);
+			if(scene.models[j].animation != null)
+			{
+				starttime = performance.now(); // current timestamp in milliseconds
+				revtime = starttime;
+				window.requestAnimationFrame(Animate);
+				animeIndex = j;
+				rps = scene.models[j].animation.rps;
+			}
+			else{}
 		}
 
 		
@@ -151,38 +163,18 @@ function DrawScene() {
 				//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
 			}
 			ClipParallel(j);
-		}
-		
-//added just to draw the correct lines		
-	// for (var i = 0; i < scene.models[0].edges.length; i++) {
-    //     //index j is vert0
-    //     for (var j = 0; j < scene.models[0].edges[i].length-1; j++) {
-    //         console.log("I: "+i+" J:" + j);
-    //         //index k is vert1
-    //         var k = j + 1;
-    //         //n is value for vert0 index
-    //         var n = scene.models[0].edges[i][j];
-    //         //m is value for vert0 index
-    //         var m = scene.models[0].edges[i][k];
-
-    //         var vert0 = scene.models[0].vertices[n];
-    //         var vert1 = scene.models[0].vertices[m];
-			
-	// 	            fbMatrix = new Matrix(4, 4);
-    //                 fbMatrix.values = [[view.width / 2, 0, 0, view.width / 2],
-    //                                    [0, view.height / 2, 0, view.height / 2],
-    //                                    [0, 0, 1, 0],
-    //                                    [0, 0, 0, 1]];
-    //                 vert0 = new Vector(fbMatrix.mult(vert0));
-    //                 vert1 = new Vector(fbMatrix.mult(vert1));
-					
-    //                 DrawLine(vert0.x/vert0.w, vert0.y/vert0.w, vert1.x/vert1.w, vert1.y/vert1.w);			
-			
-	// 	}
-	// }
-		
-
-		
+			console.log("Check for animation", scene.models[j].animation + " for model: " + scene.models[j].type);
+			if(scene.models[j].animation !== undefined)
+			{
+				console.log("Inside the animation");
+				starttime = performance.now(); // current timestamp in milliseconds
+				revtime = starttime;
+				//window.requestAnimationFrame(Animate);
+				animeIndex = j;
+				rps = scene.models[j].animation.rps;
+			}
+			else{}
+		}	
 		ClipParallel();
 	}
 	else{}
@@ -243,12 +235,8 @@ function LoadNewScene() {
                 var v6 = new Vector4(x,y,z,1);
                 x = x - scene.models[i].width;
                 var v7 = new Vector4(x, y,z,1);
-                scene.models[i] = {
-                    type: 'cube',
-                        vertices: [
-                            v0,v1,v2,v3,v4,v5,v6,v7
-                        ],
-                        edges: [
+                scene.models[i].vertices = [v0,v1,v2,v3,v4,v5,v6,v7];
+				scene.models[i].edges = [
                             [0, 1, 2, 3, 0],
                             [4, 5, 6, 7, 4],
                             [0, 4],
@@ -256,7 +244,7 @@ function LoadNewScene() {
                             [2, 6],
                             [3, 7]
                         ]
-                }
+
                 console.log("after the work ",scene.models[i]);
             }
 			else if (scene.models[i].type === 'cylinder') {
@@ -289,12 +277,33 @@ function LoadNewScene() {
                 }
 
                     
-                scene.models[i] = {
-                    type: 'cylinder',
-                        vertices: bottomCircle.vertices,
-                        edges: edges
-                }
+                scene.models[i].vertices = bottomCircle.vertices;
+				scene.models[i].edges = edges;
+
             }
+			else if (scene.models[i].type === 'cone') {
+                var height = scene.models[i].height;
+                var sides = scene.models[i].sides;
+                var r = scene.models[i].radius;
+                var incrementAngle = (2 * Math.PI)/sides;
+                //making bottom circle 
+                var a = scene.models[i].center[0];
+                var b = scene.models[i].center[2];
+                var y = scene.models[i].center[1] - (scene.models[i].height/2);
+                //y, sides, r, incrementAngle, a,b
+                var bottomCircle = CreateCirclePoints(y, sides, r, incrementAngle, a,b);
+                y = y + height;
+                var topPoint = new Vector4(a, y, b, 1);
+                bottomCircle.vertices.push(topPoint);
+                var edges = [];
+                edges[0] = bottomCircle.edges;
+                edges[1] = [sides];
+                for(var j=2; j<bottomCircle.edges.length; j++) {
+                    edges[j] = [j-1, edges[1]];
+                }     
+                scene.models[i].vertices = bottomCircle.vertices;
+				scene.models[i].edges = edges;
+			}
             else {
                 scene.models[i].center = Vector4(scene.models[i].center[0],
                     scene.models[i].center[1],
@@ -302,7 +311,7 @@ function LoadNewScene() {
                     1);
             }
         }
-
+		
         DrawScene();
     };
     reader.readAsText(scene_file.files[0], "UTF-8");
@@ -349,6 +358,8 @@ function OnKeyDown(event) {
         // step 2: transform models based on time or delta time
         // step 3: draw scene
         // step 4: request next animation frame (recursively calling same function)
+		view = document.getElementById('view');
+		ctx.clearRect(0, 0, view.width, view.height);
 
 
         var time = timestamp - starttime;
@@ -361,14 +372,28 @@ function OnKeyDown(event) {
 		console.log("These are the times, timestamp: " + timestamp + " starttime: " + starttime + " prevtime: " + prevtime + " time: " + time + " dt: " + dt); 
 		
 		
-		var center = scene.view.models[index].center;
-		result1 = mat4x4translate(-center[0], -center[1], -center[2]);
 		
-		result3= mat4x4translate(center[0], center[1], center[2]);
+		var theta = (1/(2*Math.PI))*rps*(time*2000);
+		console.log("Theta is: " + theta);
+		if(dt > 1000){
+			var center = scene.models[animeIndex].center;
+			result1 = mat4x4translate(-center[0], -center[1], -center[2]);
+			result2 = mat4x4rotatex(theta);
+			result3= mat4x4translate(center[0], center[1], center[2]);
+			
+			
+			var finalresult = result3.mult(result2);
+			finalresult = finalresult.mult(result1);
 		
-		//var theta = Math.acos(tempvertices
-
-        DrawScene();
+			for (var i = 0; i < scene.models[animeIndex].vertices.length; i++) {
+					//will give in terms of tiny window 
+					tempvertices[i] = Matrix.multiply(finalresult, scene.models[animeIndex].vertices[i]);
+			}
+			DrawScene();
+		}
+		else{
+			DrawScene();
+		}
 
         //window.requestAnimationFrame(Animate);
     }
