@@ -2,6 +2,8 @@ var view;
 var ctx;
 var scene;
 var tempvertices = [];
+var start_time;
+var prev_time;
 
 // Initialization function - called when web page loads
 function Init() {
@@ -99,20 +101,18 @@ function Init() {
     // event handler for pressing arrow keys
     document.addEventListener('keydown', OnKeyDown, false);
 	
-	/*
-	//CLEAR OLD 
+	
+	/*//CLEAR OLD 
     view = document.getElementById('view');
     ctx.clearRect(0, 0, view.width, view.height);
 
     //ANIMATION
-    var start_time;
-    var prev_time;   
-	start_time = performance.now(); // current timestamp in milliseconds
-    prev_time = start_time;
-    window.requestAnimationFrame(Animate);
+	starttime = performance.now(); // current timestamp in milliseconds
+    prevtime = starttime;
+    //window.requestAnimationFrame(Animate);
 
-    //console.log(scene);
-	*/
+    //console.log(scene);*/
+	
     DrawScene();
 }
 
@@ -259,6 +259,42 @@ function LoadNewScene() {
                 }
                 console.log("after the work ",scene.models[i]);
             }
+			else if (scene.models[i].type === 'cylinder') {
+                var height = scene.models[i].height;
+                var sides = scene.models[i].sides;
+                var r = scene.models[i].radius;
+                var incrementAngle = (2 * Math.PI)/sides;
+                //making bottom circle first
+                var a = scene.models[i].center[0];
+                var b = scene.models[i].center[2];
+                var y = scene.models[i].center[1] - (scene.models[i].height/2);
+                //y, sides, r, incrementAngle, a,b
+                var bottomCircle = CreateCirclePoints(y, sides, r, incrementAngle, a,b);
+                
+                //top circle
+                y = y + height;
+                var topCircle = CreateCirclePoints(y, sides, r, incrementAngle, a,b);
+                var edges = [];
+                for (var j = 0; j<topCircle.vertices.length; j++) {
+                    bottomCircle.vertices.push(topCircle.vertices[j]);
+                }
+                edges[0] = bottomCircle.edges;
+                for (var j = 0; j<bottomCircle.edges.length; j++) {
+                    topCircle.edges[j] = j + bottomCircle.edges.length-1;
+                }
+                topCircle.edges[topCircle.edges.length-1] = topCircle.edges[0];
+                edges[1] = topCircle.edges;
+                for (var j=2; j<bottomCircle.vertices.length-2; j++) {
+                    edges[j] = [j-2, j + bottomCircle.edges.length -3];
+                }
+
+                    
+                scene.models[i] = {
+                    type: 'cylinder',
+                        vertices: bottomCircle.vertices,
+                        edges: edges
+                }
+            }
             else {
                 scene.models[i].center = Vector4(scene.models[i].center[0],
                     scene.models[i].center[1],
@@ -315,18 +351,26 @@ function OnKeyDown(event) {
         // step 4: request next animation frame (recursively calling same function)
 
 
-        var time = time_stamp - start_time;
-        var dt = timestamp - prev_time;
-        prev_time = time_stamp;
+        var time = timestamp - starttime;
+        var dt = timestamp - prevtime;
+        prevtime = timestamp;
 
 
 			
         // ... step 2
+		console.log("These are the times, timestamp: " + timestamp + " starttime: " + starttime + " prevtime: " + prevtime + " time: " + time + " dt: " + dt); 
 		
+		
+		var center = scene.view.models[index].center;
+		result1 = mat4x4translate(-center[0], -center[1], -center[2]);
+		
+		result3= mat4x4translate(center[0], center[1], center[2]);
+		
+		//var theta = Math.acos(tempvertices
 
         DrawScene();
 
-        window.requestAnimationFrame(Animate);
+        //window.requestAnimationFrame(Animate);
     }
 
 
@@ -657,12 +701,32 @@ function GetOutCodePerspective(vector, zmin) {
     }
     return outcode;
 }
+function CreateCirclePoints(y, sides, r, incrementAngle, a,b) {
+    var createdVertices = [];
+    createdVertices.length = sides;
+   var t=0;
+    var vx;
+    var vz;
+    for (var i=0; i<sides; i++){
 
-/*
+        vx = a + r*Math.cos(t);
+        vz = b + r*Math.sin(t);
+        var tempVert = new Vector4(vx,y,vz,1)
+        createdVertices[i] = tempVert;
 
-function ClipLine(pt0, pt1, view) {
+        t = t + incrementAngle;
+    }
 
+    var edges = [];
 
+    for (var i=0; i<createdVertices.length; i++) {
+        edges[i] = i;
+    }
+    //last vertex connects back to the first one ex: [0,1,2,3,0]
+    edges[edges.length]= 0;
+    
+    
+    var returnObject = {"vertices": createdVertices,"edges": edges};
+
+    return returnObject;
 }
-
- */
