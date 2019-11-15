@@ -108,9 +108,9 @@ function Init() {
     //console.log(scene);*/
 	starttime = performance.now(); // current timestamp in milliseconds
     prevtime = starttime;
-	//window.requestAnimationFrame(Animate);
+	window.requestAnimationFrame(Animate);
 	
-    DrawScene();
+    //DrawScene();
 }
 
 // Main drawing code here! Use information contained in variable `scene`
@@ -125,19 +125,11 @@ function DrawScene() {
 			//will need to loop though all models later on.
 			for (var i = 0; i < scene.models[j].vertices.length; i++) {
 				//will give in terms of tiny window 
-				tempvertices[i] = Matrix.multiply(transMatrix, scene.models[j].vertices[i]);
+				tempvertices[i] = Matrix.multiply(transMatrix, scene.models[j].transform, scene.models[j].vertices[i]);
 				//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
 			}
 			ClipPerspective(j);
-			if(scene.models[j].animation != undefined)
-			{
-				starttime = performance.now(); // current timestamp in milliseconds
-				revtime = starttime;
-				//window.requestAnimationFrame(Animate);
-				animeIndex = j;
-				rps = scene.models[j].animation.rps;
-			}
-			else{}
+
 		}
 	}
 	else if(scene.view.type === "parallel"){
@@ -151,22 +143,11 @@ function DrawScene() {
 			//will need to loop though all models later on.
 			for (var i = 0; i < scene.models[j].vertices.length; i++) {
 				//will give in terms of tiny window 
-				tempvertices[i] = Matrix.multiply(transMatrix, scene.models[j].vertices[i]);
+				tempvertices[i] = Matrix.multiply(transMatrix, scene.models[j].transform, scene.models[j].vertices[i]);
 				//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
 			}
 			ClipParallel(j);
-			if(scene.models[j].animation !== undefined)
-			{
-				console.log("Inside the animation");
-				starttime = performance.now(); // current timestamp in milliseconds
-				revtime = starttime;
-				//window.requestAnimationFrame(Animate);
-				animeIndex = j;
-				rps = scene.models[j].animation.rps;
-			}
-			else{}
-		}	
-		ClipParallel();
+		}
 	}
 	else{}
 	
@@ -348,7 +329,10 @@ function OnKeyDown(event) {
 function Animate(timestamp) {
         // step 1: calculate time (time since start) 
         //        and/or delta time (time between successive frames)
-        // step 2: transform models based on time or delta time
+        // step 2: transform models based on time or delta time.
+		//Loop through models and see which ones have animation. Depending on rps we want transform the vertices.
+		//Model view projection
+		//First thing we do is rotate, and then put into transform
         // step 3: draw scene
         // step 4: request next animation frame (recursively calling same function)
 		view = document.getElementById('view');
@@ -357,32 +341,38 @@ function Animate(timestamp) {
         var time = timestamp - starttime;
         var dt = timestamp - prevtime;
         prevtime = timestamp;
-			
         // ... step 2
-		console.log("These are the times, timestamp: " + timestamp + " starttime: " + starttime + " prevtime: " + prevtime + " time: " + time + " dt: " + dt); 	
-		var theta = (1/(2*Math.PI))*scene.models[animeIndex].animation.rps*(time*2000);
-		console.log("Theta is: " + theta + " rps: " + scene.models[animeIndex].animation.rps + " time: " + time);
-		if(dt > 1000){
-			var center = scene.models[animeIndex].center;
-			result1 = mat4x4translate(-center[0], -center[1], -center[2]);
-			result2 = mat4x4rotatex(theta);
-			result3= mat4x4translate(center[0], center[1], center[2]);
-			
-			
-			var finalresult = result3.mult(result2);
-			finalresult = finalresult.mult(result1);
-		
-			for (var i = 0; i < scene.models[animeIndex].vertices.length; i++) {
-					//will give in terms of tiny window 
-					tempvertices[i] = Matrix.multiply(finalresult, scene.models[animeIndex].vertices[i]);
+		var j
+		for( j=0; j< scene.models.length; j++){
+			var transformMat;
+			if(scene.models[j].animation != undefined)
+			{
+				var theta = ((2*Math.PI))*scene.models[j].animation.rps*(time/1000);
+				console.log("Theta is: " + theta + " rps: " + scene.models[j].animation.rps + " time: " + time);
+				
+				var center = scene.models[j].center;
+				result1 = mat4x4translate(-center[0], -center[1], -center[2]);
+				if(scene.models[j].animation.axis == "x"){
+					result2 = mat4x4rotatex(theta);
+				}
+				else if(scene.models[j].animation.axis == "y"){
+					result2 = mat4x4rotatey(theta);
+				}
+				else{
+					result2 = mat4x4rotatez(theta);
+				}
+				result3= mat4x4translate(center[0], center[1], center[2]);					
+				var finalresult = Matrix.multiply(result3, result2, result1);
+				transformMat = finalresult;
+				var ogData = scene.models[j].vertices;
 			}
-			DrawScene();
+			else{
+				transformMat= mat4x4identity();
+			}
+			scene.models[j].transform = transformMat;
+			DrawScene();			
 		}
-		else{
-			DrawScene();
-		}
-
-        //window.requestAnimationFrame(Animate);
+        window.requestAnimationFrame(Animate);
 }
 	
 // Draw black 2D line with red endpoints 
@@ -677,33 +667,25 @@ function GetOutCodeParallel(vector) {
 
 function GetOutCodePerspective(vector, zmin) {
     var outcode = 0;
-	//console.log("x is " + vector.values[0][0] + " y is " + vector.values[1][0] + " z is " + vector.values[2][0]);
-    //left right
-    if (vector.x < vector.z) {
+	var epsilon = .00000001;
+    if (vector.x < vector.z-epsilon) {
         outcode += 32;
-		//console.log("left of left");
     }
-    else if (vector.x > -vector.z) {
+    else if (vector.x > -vector.z+epsilon) {
         outcode += 16
-		//console.log("right of right");
     }
-    //top bottom
-    if (vector.y < vector.z) {
+    if (vector.y < vector.z-epsilon) {
         outcode += 8
-		//console.log("bottom of bottom");
     }
-    else if (vector.y > -vector.z) {
+    else if (vector.y > -vector.z+epsilon) {
         outcode += 4
-		//console.log("top of top");
     }
     //near far
-    if (vector.z > zmin) {
+    if (vector.z > zmin+epsilon) {
         outcode += 2
-		//console.log("near of near");
     }
     else if (vector.z < -1) {
         outcode += 1
-		//console.log("back of back");
     }
     return outcode;
 }
@@ -722,16 +704,13 @@ function CreateCirclePoints(y, sides, r, incrementAngle, a,b) {
 
         t = t + incrementAngle;
     }
-
     var edges = [];
 
     for (var i=0; i<createdVertices.length; i++) {
         edges[i] = i;
     }
-    //last vertex connects back to the first one ex: [0,1,2,3,0]
     edges[edges.length]= 0;
-    
-    
+        
     var returnObject = {"vertices": createdVertices,"edges": edges};
 
     return returnObject;
