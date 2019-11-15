@@ -1,6 +1,7 @@
 var view;
 var ctx;
 var scene;
+var tempvertices = [];
 
 // Initialization function - called when web page loads
 function Init() {
@@ -26,22 +27,22 @@ function Init() {
 
         view: {
 
-            type: 'parallel',
+            type: 'perspective',
 			
-			/*	
+				
             vrp: Vector3(20, 0, -30),
             vpn: Vector3(1, 0, 1),
             vup: Vector3(0, 1, 0),
             prp: Vector3(14, 20, 26),
             clip: [-20, 20, -4, 36, 1, -50]
 		
-			*/	
+				/*
 			vrp: Vector3(0, 0, -54),
             vpn: Vector3(0, 0, 1),
             vup: Vector3(0, 1, 0),
             prp: Vector3(8, 8, 30),
             clip: [-1, 17, -1, 17, 2, -23]
-		
+		*/
 			
 			
 
@@ -88,7 +89,7 @@ function DrawScene() {
 		//will need to loop though all models later on.
 		for (var i = 0; i < scene.models[0].vertices.length; i++) {
 			//will give in terms of tiny window 
-			scene.models[0].vertices[i] = Matrix.multiply(transMatrix, scene.models[0].vertices[i]);
+			tempvertices[i] = Matrix.multiply(transMatrix, scene.models[0].vertices[i]);
 			//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
         }
         
@@ -103,7 +104,7 @@ function DrawScene() {
 		//will need to loop though all models later on.
 		for (var i = 0; i < scene.models[0].vertices.length; i++) {
 			//will give in terms of tiny window 
-			scene.models[0].vertices[i] = Matrix.multiply(transMatrix, scene.models[0].vertices[i]);
+			tempvertices[i] = Matrix.multiply(transMatrix, scene.models[0].vertices[i]);
 			//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
 		}
 		
@@ -218,52 +219,6 @@ function OnKeyDown(event) {
 				view = document.getElementById('view');
 			ctx.clearRect(0, 0, view.width, view.height);
 			ctx = view.getContext('2d');
-			    scene = {
-
-        view: {
-            type: 'perspective',
-			/*
-            vrp: Vector3(20, 0, -30),
-            vpn: Vector3(1, 0, 1),
-            vup: Vector3(0, 1, 0),
-            prp: Vector3(14, 20, 26),
-            clip: [-20, 20, -4, 36, 1, -50]
-			
-			*/
-			vrp: Vector3(0, 0, -54),
-            vpn: Vector3(0, 0, 1),
-            vup: Vector3(0, 1, 0),
-            prp: Vector3(8, 8, 30),
-            clip: [-1, 17, -1, 17, 2, -23]
-			
-        },
-        models: [
-            {
-                type: 'generic',
-                vertices: [
-                    Vector4(0, 0, -30, 1),
-                    Vector4(20, 0, -30, 1),
-                    Vector4(20, 12, -30, 1),
-                    Vector4(10, 20, -30, 1),
-                    Vector4(0, 12, -30, 1),
-                    Vector4(0, 0, -60, 1),
-                    Vector4(20, 0, -60, 1),
-                    Vector4(20, 12, -60, 1),
-                    Vector4(10, 20, -60, 1),
-                    Vector4(0, 12, -60, 1)
-                ],
-                edges: [
-                    [0, 1, 2, 3, 4, 0],
-                    [5, 6, 7, 8, 9, 5],
-                    [0, 5],
-                    [1, 6],
-                    [2, 7],
-                    [3, 8],
-                    [4, 9]
-                ]
-            }
-        ]
-		};
 	var n = new Vector(scene.view.vpn);
     n.normalize();
     var u = scene.view.vup.cross(n);
@@ -365,8 +320,8 @@ function ClipParallel() {
             //m is value for vert0 index
             var m = scene.models[0].edges[i][k];
 
-            var vert0 = new Vector(scene.models[0].vertices[n]);
-            var vert1 = new Vector(scene.models[0].vertices[m]);
+            var vert0 = new Vector(tempvertices[n]);
+            var vert1 = new Vector(tempvertices[m]);
 
             var outcode0 = GetOutCodeParallel(vert0);
             var outcode1 = GetOutCodeParallel(vert1);
@@ -478,8 +433,8 @@ function ClipPerspective() {
             //m is value for vert0 index
             var m = scene.models[0].edges[i][k];
 
-            var vert0 = new Vector(scene.models[0].vertices[n]);
-            var vert1 = new Vector(scene.models[0].vertices[m]);
+            var vert0 = new Vector(tempvertices[n]);
+            var vert1 = new Vector(tempvertices[m]);
             console.log("Vert0: ",vert0);
             console.log("Vert1: ",vert1);
 
