@@ -71,11 +71,48 @@ function Init() {
                     [3, 8],
                     [4, 9]
                 ]
+            },
+			{
+                type: 'generic',
+                vertices: [
+                    Vector4(5, 0, -20, 1),
+                    Vector4(10, 0, -20, 1),
+                    Vector4(10, 5, -20, 1),
+                    Vector4(5, 5, -20, 1),
+					Vector4(5, 0, -25, 1),
+                    Vector4(10, 0, -25, 1),
+                    Vector4(10, 5, -25, 1),
+                    Vector4(5, 5, -25, 1)
+
+                ],
+                edges: [
+                    [0, 1, 2, 3, 0],
+                    [4, 5, 6, 7, 4],
+                    [0, 4],
+                    [1, 5],
+                    [2, 6],
+                    [3, 7]
+                ]
             }
         ]
     };
     // event handler for pressing arrow keys
     document.addEventListener('keydown', OnKeyDown, false);
+	
+	/*
+	//CLEAR OLD 
+    view = document.getElementById('view');
+    ctx.clearRect(0, 0, view.width, view.height);
+
+    //ANIMATION
+    var start_time;
+    var prev_time;   
+	start_time = performance.now(); // current timestamp in milliseconds
+    prev_time = start_time;
+    window.requestAnimationFrame(Animate);
+
+    //console.log(scene);
+	*/
     DrawScene();
 }
 
@@ -85,27 +122,36 @@ function DrawScene() {
 	if(scene.view.type === "perspective"){
 		var transMatrix = mat4x4perspective(scene.view.vrp, scene.view.vpn, scene.view.vup, scene.view.prp, scene.view.clip);
 		//console.log("This is NPer" + transMatrix.values);
-		var ogData = scene.models[0].vertices;
-		//will need to loop though all models later on.
-		for (var i = 0; i < scene.models[0].vertices.length; i++) {
-			//will give in terms of tiny window 
-			tempvertices[i] = Matrix.multiply(transMatrix, scene.models[0].vertices[i]);
-			//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
-        }
-        
-		ClipPerspective();
+		var j
+		for( j=0; j< scene.models.length; j++){
+			var ogData = scene.models[j].vertices;
+			//will need to loop though all models later on.
+			for (var i = 0; i < scene.models[j].vertices.length; i++) {
+				//will give in terms of tiny window 
+				tempvertices[i] = Matrix.multiply(transMatrix, scene.models[j].vertices[i]);
+				//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
+			}
+			ClipPerspective(j);
+		}
+		console.log("This is tempvertices", tempvertices);
+
+		
 	}
 	else if(scene.view.type === "parallel"){
 		console.log("Back to parallel");
 		console.log("Check prp", scene.view.prp);
 		var transMatrix = mat4x4parallel(scene.view.vrp, scene.view.vpn, scene.view.vup, scene.view.prp, scene.view.clip);
 		//console.log("This is NPer" + transMatrix.values);
-		var ogData = scene.models[0].vertices;
-		//will need to loop though all models later on.
-		for (var i = 0; i < scene.models[0].vertices.length; i++) {
-			//will give in terms of tiny window 
-			tempvertices[i] = Matrix.multiply(transMatrix, scene.models[0].vertices[i]);
-			//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
+		var j
+		for( j=0; j< scene.models.length; j++){
+			var ogData = scene.models[j].vertices;
+			//will need to loop though all models later on.
+			for (var i = 0; i < scene.models[j].vertices.length; i++) {
+				//will give in terms of tiny window 
+				tempvertices[i] = Matrix.multiply(transMatrix, scene.models[j].vertices[i]);
+				//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
+			}
+			ClipParallel(j);
 		}
 		
 //added just to draw the correct lines		
@@ -142,39 +188,6 @@ function DrawScene() {
 	}
 	else{}
 	
-    /*
-    //CLEAR OLD 
-    view = document.getElementById('view');
-    ctx.clearRect(0, 0, view.width, view.height);
-
-    //ANIMATION
-    var start_time;
-    var prev_time;
-
-    function Animate(timestamp) {
-        // step 1: calculate time (time since start) 
-                and/or delta time (time between successive frames)
-        // step 2: transform models based on time or delta time
-        // step 3: draw scene
-        // step 4: request next animation frame (recursively calling same function)
-
-
-        var time = time_stamp - start_time;
-        var dt = timestamp - prev_time;
-        prev_time = time_stamp;
-
-        // ... step 2
-
-        DrawScene();
-
-        window.requestAnimationFrame(Animate);
-    }
-
-    start_time = performance.now(); // current timestamp in milliseconds
-    prev_time = start_time;
-    window.requestAnimationFrame(Animate);
-    */
-    //console.log(scene);
 }
 
 // Called when user selects a new scene JSON file
@@ -246,6 +259,33 @@ function OnKeyDown(event) {
     }
 }
 
+
+
+    function Animate(timestamp) {
+        // step 1: calculate time (time since start) 
+        //        and/or delta time (time between successive frames)
+        // step 2: transform models based on time or delta time
+        // step 3: draw scene
+        // step 4: request next animation frame (recursively calling same function)
+
+
+        var time = time_stamp - start_time;
+        var dt = timestamp - prev_time;
+        prev_time = time_stamp;
+
+
+			
+        // ... step 2
+		
+
+        DrawScene();
+
+        window.requestAnimationFrame(Animate);
+    }
+
+
+	
+	
 // Draw black 2D line with red endpoints 
 function DrawLine(x1, y1, x2, y2) {
     ctx.strokeStyle = '#000000';
@@ -267,21 +307,21 @@ function DrawLine(x1, y1, x2, y2) {
     var BEHIND = 1;
 	
 	
-function ClipParallel() {
+function ClipParallel(index) {
 
 
     //i is the index in edges
     //loop through each set of edges
-    for (var i = 0; i < scene.models[0].edges.length; i++) {
+    for (var i = 0; i < scene.models[index].edges.length; i++) {
         //index j is vert0
-        for (var j = 0; j < scene.models[0].edges[i].length-1; j++) {
+        for (var j = 0; j < scene.models[index].edges[i].length-1; j++) {
             console.log("I: "+i+" J:" + j);
             //index k is vert1
             var k = j + 1;
             //n is value for vert0 index
-            var n = scene.models[0].edges[i][j];
+            var n = scene.models[index].edges[i][j];
             //m is value for vert0 index
-            var m = scene.models[0].edges[i][k];
+            var m = scene.models[index].edges[i][k];
 
             var vert0 = new Vector(tempvertices[n]);
             var vert1 = new Vector(tempvertices[m]);
@@ -378,23 +418,23 @@ function ClipParallel() {
         }
     }
 }
-function ClipPerspective() {
+function ClipPerspective(index) {
 	
 	var zmin = (-1) * (((-1)*scene.view.prp.z) + scene.view.clip[4])/ ((-1)*(scene.view.prp.z) + scene.view.clip[5]);
 	console.log("zmin is" + zmin);
 
     //i is the index in edges
     //loop through each set of edges
-    for (var i = 0; i < scene.models[0].edges.length; i++) {
+    for (var i = 0; i < scene.models[index].edges.length; i++) {
         //index j is vert0
-        for (var j = 0; j < scene.models[0].edges[i].length-1; j++) {
+        for (var j = 0; j < scene.models[index].edges[i].length-1; j++) {
             //console.log("I: "+i+" J:" + j);
             //index k is vert1
             var k = j + 1;
             //n is value for vert0 index
-            var n = scene.models[0].edges[i][j];
+            var n = scene.models[index].edges[i][j];
             //m is value for vert0 index
-            var m = scene.models[0].edges[i][k];
+            var m = scene.models[index].edges[i][k];
 
             var vert0 = new Vector(tempvertices[n]);
             var vert1 = new Vector(tempvertices[m]);
