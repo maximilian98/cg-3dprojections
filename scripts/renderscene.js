@@ -20,14 +20,6 @@ function Init() {
 
     // initial scene... feel free to change this
     scene = {
-        /*
-        sphere stuff he wrote on the board
-        
-        increment = 2pi/sides
-        x = center.x + radius*cos(theta)
-        y = center.y - height/z
-        z = center.z + radius*sin(theta)
-        */
         view: {
 
             type: 'perspective',
@@ -96,16 +88,9 @@ function Init() {
             }
         ]
     };
-    // event handler for pressing arrow keys
+
     document.addEventListener('keydown', OnKeyDown, false);
-	/*//CLEAR OLD 
-    view = document.getElementById('view');
-    ctx.clearRect(0, 0, view.width, view.height);
 
-    //ANIMATION
-	
-
-    //console.log(scene);*/
 	starttime = performance.now(); // current timestamp in milliseconds
     prevtime = starttime;
 	window.requestAnimationFrame(Animate);
@@ -113,38 +98,26 @@ function Init() {
     //DrawScene();
 }
 
-// Main drawing code here! Use information contained in variable `scene`
 function DrawScene() {
 
 	if(scene.view.type === "perspective"){
 		var transMatrix = mat4x4perspective(scene.view.vrp, scene.view.vpn, scene.view.vup, scene.view.prp, scene.view.clip);
-		//console.log("This is NPer" + transMatrix.values);
 		var j
 		for( j=0; j< scene.models.length; j++){
 			var ogData = scene.models[j].vertices;
-			//will need to loop though all models later on.
 			for (var i = 0; i < scene.models[j].vertices.length; i++) {
-				//will give in terms of tiny window 
 				tempvertices[i] = Matrix.multiply(transMatrix, scene.models[j].transform, scene.models[j].vertices[i]);
-				//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
 			}
 			ClipPerspective(j);
-
 		}
 	}
 	else if(scene.view.type === "parallel"){
-		console.log("Back to parallel");
-		console.log("Check prp", scene.view.prp);
 		var transMatrix = mat4x4parallel(scene.view.vrp, scene.view.vpn, scene.view.vup, scene.view.prp, scene.view.clip);
-		//console.log("This is NPer" + transMatrix.values);
 		var j
 		for( j=0; j< scene.models.length; j++){
 			var ogData = scene.models[j].vertices;
-			//will need to loop though all models later on.
 			for (var i = 0; i < scene.models[j].vertices.length; i++) {
-				//will give in terms of tiny window 
 				tempvertices[i] = Matrix.multiply(transMatrix, scene.models[j].transform, scene.models[j].vertices[i]);
-				//console.log("verticies in -1 to 1 " + scene.models[0].vertices[i].values)
 			}
 			ClipParallel(j);
 		}
@@ -155,7 +128,6 @@ function DrawScene() {
 
 // Called when user selects a new scene JSON file
 function LoadNewScene() {
-	//CLEAR OLD 
     view = document.getElementById('view');
     ctx.clearRect(0, 0, view.width, view.height);
     var scene_file = document.getElementById('scene_file');
@@ -179,9 +151,7 @@ function LoadNewScene() {
                         1);
                 }
             }
-			else if (scene.models[i].type === 'cube') {
-                console.log("made it to the cube else if")
-                
+			else if (scene.models[i].type === 'cube') {                
                 //make the front of the cube.
 				
                 var x = scene.models[i].center[0] - (scene.models[i].width/2);
@@ -216,22 +186,17 @@ function LoadNewScene() {
                             [2, 6],
                             [3, 7]
                         ]
-
-                console.log("after the work ",scene.models[i]);
             }
 			else if (scene.models[i].type === 'cylinder') {
                 var height = scene.models[i].height;
                 var sides = scene.models[i].sides;
                 var r = scene.models[i].radius;
                 var incrementAngle = (2 * Math.PI)/sides;
-                //making bottom circle first
                 var a = scene.models[i].center[0];
                 var b = scene.models[i].center[2];
                 var y = scene.models[i].center[1] - (scene.models[i].height/2);
-                //y, sides, r, incrementAngle, a,b
                 var bottomCircle = CreateCirclePoints(y, sides, r, incrementAngle, a,b);
                 
-                //top circle
                 y = y + height;
                 var topCircle = CreateCirclePoints(y, sides, r, incrementAngle, a,b);
                 var edges = [];
@@ -247,8 +212,6 @@ function LoadNewScene() {
                 for (var j=2; j<bottomCircle.vertices.length-2; j++) {
                     edges[j] = [j-2, j + bottomCircle.edges.length -3];
                 }
-
-                    
                 scene.models[i].vertices = bottomCircle.vertices;
 				scene.models[i].edges = edges;
 
@@ -258,11 +221,9 @@ function LoadNewScene() {
                 var sides = scene.models[i].sides;
                 var r = scene.models[i].radius;
                 var incrementAngle = (2 * Math.PI)/sides;
-                //making bottom circle 
                 var a = scene.models[i].center[0];
                 var b = scene.models[i].center[2];
                 var y = scene.models[i].center[1] - (scene.models[i].height/2);
-                //y, sides, r, incrementAngle, a,b
                 var bottomCircle = CreateCirclePoints(y, sides, r, incrementAngle, a,b);
                 y = y + height;
                 var topPoint = new Vector4(a, y, b, 1);
@@ -327,21 +288,11 @@ function OnKeyDown(event) {
     }
 }
 function Animate(timestamp) {
-        // step 1: calculate time (time since start) 
-        //        and/or delta time (time between successive frames)
-        // step 2: transform models based on time or delta time.
-		//Loop through models and see which ones have animation. Depending on rps we want transform the vertices.
-		//Model view projection
-		//First thing we do is rotate, and then put into transform
-        // step 3: draw scene
-        // step 4: request next animation frame (recursively calling same function)
 		view = document.getElementById('view');
 		ctx.clearRect(0, 0, view.width, view.height);
-
         var time = timestamp - starttime;
         var dt = timestamp - prevtime;
         prevtime = timestamp;
-        // ... step 2
 		var j
 		for( j=0; j< scene.models.length; j++){
 			var transformMat;
@@ -395,11 +346,6 @@ function DrawLine(x1, y1, x2, y2) {
     var BEHIND = 1;
 		
 function ClipParallel(index) {
-
-
-    //i is the index in edges
-    //loop through each set of edges
-	console.log("This is scene", scene);
     for (var i = 0; i < scene.models[index].edges.length; i++) {
         //index j is vert0
         for (var j = 0; j < scene.models[index].edges[i].length-1; j++) {
@@ -441,7 +387,6 @@ function ClipParallel(index) {
                     done = true;
                 }
                 else {
-                    console.log("neither trivial accept nor reject")
                     var selected_pt;
                     var selected_outcode;
                     if (outcode0 > 0) {
@@ -452,7 +397,6 @@ function ClipParallel(index) {
                         selected_pt =  new Vector(vert1);
                         selected_outcode = outcode1;
                     }
-                    console.log("before changing selected_pt.values: "+selected_pt.values)
                     if ((selected_outcode & LEFT) === LEFT) {
                         var t = (-1-selected_pt.x)/delta_x;
                         selected_pt.x = selected_pt.x + (t*delta_x);
@@ -461,13 +405,9 @@ function ClipParallel(index) {
                     }
                     else if ((selected_outcode & RIGHT) === RIGHT) {
                         var t = (1-selected_pt.x)/delta_x;
-						console.log("t is:" + t + " Delta y" + delta_y + " delta x: " + delta_x);
-						console.log("Before change selected point y is:" + selected_pt.y);
                         selected_pt.x = selected_pt.x + (t*delta_x);
                         selected_pt.y = selected_pt.y + (t*delta_y);
 						selected_pt.z = selected_pt.z + (t*delta_z);
-						console.log("After change selected point y is:" + selected_pt.y);
-						console.log("after changing right selected_pt.values: "+selected_pt.values)
                     }
                     else if ((selected_outcode & BOTTOM) === BOTTOM) {
                         var t = (-1-selected_pt.y)/delta_y;
@@ -509,15 +449,9 @@ function ClipParallel(index) {
 function ClipPerspective(index) {
 	
 	var zmin = (-1) * (((-1)*scene.view.prp.z) + scene.view.clip[4])/ ((-1)*(scene.view.prp.z) + scene.view.clip[5]);
-	console.log("zmin is" + zmin);
-
-    //i is the index in edges
-    //loop through each set of edges
     for (var i = 0; i < scene.models[index].edges.length; i++) {
         //index j is vert0
         for (var j = 0; j < scene.models[index].edges[i].length-1; j++) {
-            //console.log("I: "+i+" J:" + j);
-            //index k is vert1
             var k = j + 1;
             //n is value for vert0 index
             var n = scene.models[index].edges[i][j];
@@ -526,8 +460,7 @@ function ClipPerspective(index) {
 
             var vert0 = new Vector(tempvertices[n]);
             var vert1 = new Vector(tempvertices[m]);
-            console.log("Vert0: ",vert0);
-            console.log("Vert1: ",vert1);
+
 
             var outcode0 = GetOutCodePerspective(vert0, zmin);
             var outcode1 = GetOutCodePerspective(vert1, zmin);
@@ -540,12 +473,8 @@ function ClipPerspective(index) {
             //outcode0 = 0;
             //outcode1 = 0;
             while (!done) {
-			   console.log("outcode0 " + outcode0 + " outcode1 " + outcode1);
                 if ((outcode0 | outcode1) === 0) { //trivial accept
                     done = true;
-					
-					//Mper
-					
 					mPer = new Matrix(4, 4);
                     mPer.values = [[1, 0, 0, 0],
                                    [0, 1, 0, 0],
@@ -553,7 +482,6 @@ function ClipPerspective(index) {
                                    [0, 0, -1, 0]];
 					vert0 = mPer.mult(vert0);
                     vert1 = mPer.mult(vert1);
-					
 					
                     fbMatrix = new Matrix(4, 4);
                     fbMatrix.values = [[view.width / 2, 0, 0, view.width / 2],
@@ -565,11 +493,9 @@ function ClipPerspective(index) {
                     DrawLine(vert0.x/vert0.w, vert0.y/vert0.w, vert1.x/vert1.w, vert1.y/vert1.w);
                 }
                 else if ((outcode0 & outcode1) !== 0) {
-                    console.log("trivial reject")
                     done = true;
                 }
                 else {
-                    console.log("neither trivial accept nor reject")
                     var selected_pt;
                     var selected_outcode;
                     if (outcode0 > 0) {
@@ -580,10 +506,8 @@ function ClipPerspective(index) {
                         selected_pt = vert1;
                         selected_outcode = outcode1;
                     }
-                    console.log("selected_pt.values: "+selected_pt.values)
                     if ((selected_outcode & LEFT) === LEFT) {
                         var t = (-vert0.x + vert0.z)/(delta_x-delta_z);
-                        console.log("LEFT t = "+t);
                         selected_pt.x = vert0.x + (t*delta_x);
                         selected_pt.y = vert0.y + (t*delta_y);
 						selected_pt.z = vert0.z + (t*delta_z);
@@ -591,35 +515,30 @@ function ClipPerspective(index) {
                     }
                     else if ((selected_outcode & RIGHT) === RIGHT) {
                         var t = (vert0.x + vert0.z)/(-delta_x-delta_z);
-                        console.log("RIGHT t = "+t);
                         selected_pt.x = vert0.x + (t*delta_x);
                         selected_pt.y = vert0.y + (t*delta_y);
 						selected_pt.z = vert0.z + (t*delta_z);
                     }
                     else if ((selected_outcode & BOTTOM) === BOTTOM) {
                         var t = (-vert0.y + vert0.z)/(delta_y-delta_z);
-                        console.log("BOTTOM t = "+t);
                         selected_pt.x = vert0.x + (t*delta_x);
                         selected_pt.y = vert0.y + (t*delta_y);
 						selected_pt.z = vert0.z + (t*delta_z);
                     }
                     else if ((selected_outcode & TOP) === TOP){
                         var t = (vert0.y + vert0.z)/(-delta_y-delta_z);
-                        console.log("TOP t = "+t);
                         selected_pt.x = vert0.x + (t*delta_x);
                         selected_pt.y = vert0.y + (t*delta_y);
 						selected_pt.z = vert0.z + (t*delta_z);
                     }
                     else if ((selected_outcode & INFRONT) === INFRONT){
                         var t = (vert0.z -zmin )/(-delta_z);
-                        console.log("NEAR t = "+t);
                         selected_pt.x = vert0.x + (t*delta_x);
                         selected_pt.y = vert0.y + (t*delta_y);
 						selected_pt.z = vert0.z + (t*delta_z);
                     }
                     else{
                         var t = (-vert0.z -1 )/(delta_z);
-                        console.log("FAR t = "+t);
                         selected_pt.x = vert0.x + (t*delta_x);
                         selected_pt.y = vert0.y + (t*delta_y);
 						selected_pt.z = vert0.z + (t*delta_z);               
@@ -641,7 +560,6 @@ function ClipPerspective(index) {
 function GetOutCodeParallel(vector) {
     var outcode = 0;
     //left right
-    console.log("XXXX: "+vector.values[0])
     if (vector.x < -1) {
         outcode += 32;
     }
