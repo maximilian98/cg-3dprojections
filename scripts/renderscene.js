@@ -133,7 +133,6 @@ function DrawScene() {
 			}
 			ClipPerspective(j);
 		}
-		console.log("This is tempvertices", tempvertices);
 
 		
 	}
@@ -192,6 +191,9 @@ function DrawScene() {
 
 // Called when user selects a new scene JSON file
 function LoadNewScene() {
+	//CLEAR OLD 
+    view = document.getElementById('view');
+    ctx.clearRect(0, 0, view.width, view.height);
     var scene_file = document.getElementById('scene_file');
 
     console.log(scene_file.files[0]);
@@ -212,6 +214,50 @@ function LoadNewScene() {
                         scene.models[i].vertices[j][2],
                         1);
                 }
+            }
+			else if (scene.models[i].type === 'cube') {
+                console.log("made it to the cube else if")
+                
+                //make the front of the cube.
+				
+                var x = scene.models[i].center[0] - (scene.models[i].width/2);
+                var z = scene.models[i].center[2] + (scene.models[i].width/2);
+                var y = scene.models[i].center[1] - (scene.models[i].height/2);
+                console.log("trying " + x,y,z);
+                var v0 = new Vector4(x,y,z,1);
+                x = x + scene.models[i].width;
+                var v1 = new Vector4(x,y,z,1);
+                console.log("v0 " ,v0);
+                //creating front top verticies
+                y = y + scene.models[i].height;
+                var v2 = new Vector4(x,y,z,1);
+                x = x - scene.models[i].width;
+                var v3 = new Vector4(x,y,z,1);
+                //back verticies -- starting with back bottom left
+                y = y-scene.models[i].height;
+                z = z - scene.models[i].width;
+                var v4 = new Vector4(x,y,z,1);
+                x = x + scene.models[i].width;
+                var v5 = new Vector4(x,y,z,1);
+                y = y + scene.models[i].height;
+                var v6 = new Vector4(x,y,z,1);
+                x = x - scene.models[i].width;
+                var v7 = new Vector4(x, y,z,1);
+                scene.models[i] = {
+                    type: 'cube',
+                        vertices: [
+                            v0,v1,v2,v3,v4,v5,v6,v7
+                        ],
+                        edges: [
+                            [0, 1, 2, 3, 0],
+                            [4, 5, 6, 7, 4],
+                            [0, 4],
+                            [1, 5],
+                            [2, 6],
+                            [3, 7]
+                        ]
+                }
+                console.log("after the work ",scene.models[i]);
             }
             else {
                 scene.models[i].center = Vector4(scene.models[i].center[0],
@@ -312,6 +358,7 @@ function ClipParallel(index) {
 
     //i is the index in edges
     //loop through each set of edges
+	console.log("This is scene", scene);
     for (var i = 0; i < scene.models[index].edges.length; i++) {
         //index j is vert0
         for (var j = 0; j < scene.models[index].edges[i].length-1; j++) {
